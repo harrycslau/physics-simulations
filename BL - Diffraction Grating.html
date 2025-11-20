@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物理實驗室：繞射光柵模擬</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom slider styling */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+        }
+        input[type=range]:focus {
+            outline: none; 
+        }
+        
+        /* Neon Text Effect */
+        .neon-text {
+            text-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+        }
+        
+        /* Canvas Glow */
+        .screen-glow {
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gray-800 border-b border-gray-700 p-4 shadow-lg">
+        <div class="max-w-6xl mx-auto flex items-center gap-3">
+            <i class="fas fa-microscope text-2xl text-blue-400"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-wider">物理實驗室：繞射光柵 (Diffraction Grating)</h1>
+                <p class="text-xs text-gray-400">公式驗證：d sin θ = n λ</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Controls Section -->
+        <div class="lg:col-span-1 space-y-6 bg-gray-800 p-6 rounded-xl shadow-xl h-fit">
+            <h2 class="text-lg font-semibold border-l-4 border-blue-500 pl-3 mb-4">實驗參數設定</h2>
+
+            <!-- Wavelength Control -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <label class="text-sm font-medium text-gray-300">激光波長 ($\lambda$)</label>
+                    <span id="lambda-display" class="font-mono font-bold text-blue-400 bg-gray-900 px-2 py-1 rounded">532 nm</span>
+                </div>
+                <input type="range" id="lambda-slider" min="380" max="750" value="532" step="1" 
+                    class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-thumb-color">
+                
+                <!-- Color Spectrum Bar -->
+                <div class="w-full h-3 rounded bg-gradient-to-r from-purple-600 via-blue-500 via-green-500 via-yellow-400 via-orange-500 to-red-600 opacity-80"></div>
+            </div>
+
+            <!-- Grating Density Control -->
+            <div class="space-y-2 pt-4 border-t border-gray-700">
+                <div class="flex justify-between items-center">
+                    <label class="text-sm font-medium text-gray-300">光柵線密度 ($N$)</label>
+                    <span id="lines-display" class="font-mono font-bold text-gray-100 bg-gray-900 px-2 py-1 rounded">500 lines/mm</span>
+                </div>
+                <input type="range" id="lines-slider" min="100" max="1200" value="500" step="50" 
+                    class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white">
+                <p class="text-xs text-gray-400 mt-1">
+                    光柵間距 $d$ = <span id="d-value" class="text-yellow-400">2.00</span> $\mu m$
+                </p>
+            </div>
+
+            <!-- Theory Box -->
+            <div class="bg-gray-900/50 p-4 rounded border border-gray-700 mt-6">
+                <h3 class="text-sm font-bold text-gray-300 mb-2"><i class="fas fa-book-open mr-2"></i>原理提示</h3>
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    光通過狹縫時會發生繞射。當波長 $\lambda$ 增加，或光柵間距 $d$ 減少（線密度增加）時，繞射角度 $\theta$ 會變大。<br>
+                    <span class="block mt-2 text-center font-serif italic text-lg text-blue-200">d sin $\theta$ = n $\lambda$</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Visualization & Data Section -->
+        <div class="lg:col-span-2 flex flex-col gap-6">
+            
+            <!-- Visual Simulation -->
+            <div class="bg-black rounded-xl overflow-hidden shadow-2xl border border-gray-700 relative">
+                <div class="absolute top-3 left-3 z-10 bg-gray-900/80 px-3 py-1 rounded text-xs text-gray-300 border border-gray-600">
+                    模擬屏幕視角 (Screen View)
+                </div>
+                <canvas id="diffraction-canvas" class="w-full h-64 screen-glow"></canvas>
+                <!-- Screen Ruler (Visual Aid) -->
+                <div class="absolute bottom-0 w-full flex justify-between px-4 text-[10px] text-gray-500 pb-1 select-none font-mono">
+                    <span>-90°</span>
+                    <span>-45°</span>
+                    <span>0° (中央亮紋)</span>
+                    <span>+45°</span>
+                    <span>+90°</span>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-700 flex-grow">
+                <div class="p-4 bg-gray-750 border-b border-gray-700 flex justify-between items-center">
+                    <h3 class="font-semibold text-gray-200"><i class="fas fa-table mr-2"></i>測量數據</h3>
+                    <span class="text-xs bg-blue-900 text-blue-200 px-2 py-1 rounded">最大級數 ($n_{max}$): <span id="max-order"></span></span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-900/50">
+                            <tr>
+                                <th class="px-6 py-3">級數 ($n$)</th>
+                                <th class="px-6 py-3">計算公式 ($\sin \theta$)</th>
+                                <th class="px-6 py-3 text-right">繞射角 ($\theta$)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body" class="divide-y divide-gray-700">
+                            <!-- Rows will be populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="warning-msg" class="hidden p-3 bg-red-900/30 text-red-300 text-xs text-center border-t border-red-900">
+                    注意：部分高階級數因 $\sin \theta > 1$ 而無法形成。
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Constants & Elements ---
+        const lambdaSlider = document.getElementById('lambda-slider');
+        const lambdaDisplay = document.getElementById('lambda-display');
+        const linesSlider = document.getElementById('lines-slider');
+        const linesDisplay = document.getElementById('lines-display');
+        const dValueDisplay = document.getElementById('d-value');
+        const maxOrderDisplay = document.getElementById('max-order');
+        const tableBody = document.getElementById('data-table-body');
+        const canvas = document.getElementById('diffraction-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // --- State ---
+        let state = {
+            lambda: 532, // nm
+            linesPerMm: 500 // N
+        };
+
+        // --- Color Utility ---
+        function wavelengthToColor(wavelength) {
+            let R, G, B, alpha;
+            if (wavelength >= 380 && wavelength < 440) {
+                R = -(wavelength - 440) / (440 - 380); G = 0; B = 1;
+            } else if (wavelength >= 440 && wavelength < 490) {
+                R = 0; G = (wavelength - 440) / (490 - 440); B = 1;
+            } else if (wavelength >= 490 && wavelength < 510) {
+                R = 0; G = 1; B = -(wavelength - 510) / (510 - 490);
+            } else if (wavelength >= 510 && wavelength < 580) {
+                R = (wavelength - 510) / (580 - 510); G = 1; B = 0;
+            } else if (wavelength >= 580 && wavelength < 645) {
+                R = 1; G = -(wavelength - 645) / (645 - 580); B = 0;
+            } else if (wavelength >= 645 && wavelength <= 750) {
+                R = 1; G = 0; B = 0;
+            } else {
+                R = 0; G = 0; B = 0;
+            }
+            
+            // Intensity falloff near ends of spectrum
+            if (wavelength > 700) alpha = 0.3 + 0.7 * (750 - wavelength) / (750 - 700);
+            else if (wavelength < 420) alpha = 0.3 + 0.7 * (wavelength - 380) / (420 - 380);
+            else alpha = 1;
+
+            return `rgba(${R * 255}, ${G * 255}, ${B * 255}, ${alpha})`;
+        }
+
+        // --- Physics Calculation ---
+        function calculate() {
+            // d = 1 / N (mm) -> convert to meters
+            // N is in lines/mm
+            const d_mm = 1 / state.linesPerMm;
+            const d_m = d_mm * 1e-3;
+            const d_microns = d_mm * 1000;
+            
+            // lambda in meters
+            const lambda_m = state.lambda * 1e-9;
+
+            // Calculate Max Order: sin(theta) <= 1 => n * lambda / d <= 1 => n <= d / lambda
+            const maxOrder = Math.floor(d_m / lambda_m);
+
+            return {
+                d_microns,
+                d_m,
+                lambda_m,
+                maxOrder
+            };
+        }
+
+        // --- UI Updates ---
+        function updateUI() {
+            const calc = calculate();
+            const color = wavelengthToColor(state.lambda);
+            
+            // Update Text Displays
+            lambdaDisplay.textContent = `${state.lambda} nm`;
+            lambdaDisplay.style.color = color;
+            lambdaDisplay.style.textShadow = `0 0 10px ${color}`;
+            
+            linesDisplay.textContent = `${state.linesPerMm} lines/mm`;
+            dValueDisplay.textContent = calc.d_microns.toFixed(2);
+            maxOrderDisplay.textContent = calc.maxOrder;
+
+            // Style Sliders
+            lambdaSlider.style.setProperty('--thumb-color', color);
+            
+            // Need to inject style rule for slider thumb because inline styles don't work on pseudo-elements easily
+            const sheet = document.createElement('style');
+            sheet.innerHTML = `
+                #lambda-slider::-webkit-slider-thumb { background: ${color} !important; box-shadow: 0 0 10px ${color}; width: 16px; height: 16px; border-radius: 50%; margin-top: -4px; }
+                #lambda-slider::-moz-range-thumb { background: ${color} !important; box-shadow: 0 0 10px ${color}; }
+            `;
+            // Remove old style tag if exists to avoid clutter, but for this simple app appending is fine or clearing
+            const existingStyle = document.getElementById('dynamic-slider-style');
+            if(existingStyle) existingStyle.remove();
+            sheet.id = 'dynamic-slider-style';
+            document.head.appendChild(sheet);
+
+            // Update Table
+            updateTable(calc);
+            
+            // Draw Canvas
+            drawSimulation(calc, color);
+        }
+
+        function updateTable(calc) {
+            tableBody.innerHTML = '';
+            
+            // Row for n=0
+            const row0 = `
+                <tr class="bg-gray-800/50 hover:bg-gray-800 transition-colors">
+                    <td class="px-6 py-4 font-medium text-white">0 (中央)</td>
+                    <td class="px-6 py-4 font-mono text-gray-400">0.000</td>
+                    <td class="px-6 py-4 text-right font-bold text-blue-300">0.0°</td>
+                </tr>
+            `;
+            tableBody.insertAdjacentHTML('beforeend', row0);
+
+            for (let n = 1; n <= calc.maxOrder; n++) {
+                const sinTheta = (n * calc.lambda_m) / calc.d_m;
+                const thetaRad = Math.asin(sinTheta);
+                const thetaDeg = (thetaRad * 180 / Math.PI).toFixed(1);
+                
+                const row = `
+                    <tr class="bg-gray-800/50 hover:bg-gray-800 transition-colors border-t border-gray-700">
+                        <td class="px-6 py-4 font-medium text-white">±${n}</td>
+                        <td class="px-6 py-4 font-mono text-gray-400">${sinTheta.toFixed(3)}</td>
+                        <td class="px-6 py-4 text-right font-bold text-blue-300">${thetaDeg}°</td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            }
+        }
+
+        function drawSimulation(calc, color) {
+            // Canvas setup
+            const width = canvas.parentElement.clientWidth;
+            const height = canvas.parentElement.clientHeight;
+            canvas.width = width;
+            canvas.height = height;
+            
+            const centerY = height / 2;
+            const centerX = width / 2;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw Central Maxima (n=0)
+            drawSpot(centerX, centerY, color, 1.5, 20);
+
+            // Draw Orders
+            // To visualize angle on a flat screen, we map -90 to 90 degrees to the canvas width.
+            // Let's say the canvas width represents 180 degrees field of view for visualization purposes.
+            // x position = (theta / 90) * (width / 2) + center
+            
+            for (let n = 1; n <= calc.maxOrder; n++) {
+                const sinTheta = (n * calc.lambda_m) / calc.d_m;
+                const thetaRad = Math.asin(sinTheta);
+                const thetaDeg = thetaRad * 180 / Math.PI;
+                
+                // Map theta to X position (Simple linear mapping for visualization of angle)
+                // Scale: 90 degrees = width/2 roughly
+                const offsetPixels = (thetaDeg / 90) * (width / 2) * 0.9; // 0.9 padding
+                
+                // Intensity decreases with order (Simulated physics approximation)
+                const intensity = 1 / (n * 0.8 + 1); 
+
+                // Right side (+n)
+                drawSpot(centerX + offsetPixels, centerY, color, intensity, 15 - n);
+                
+                // Left side (-n)
+                drawSpot(centerX - offsetPixels, centerY, color, intensity, 15 - n);
+
+                // Draw connecting lines for visual clarity (optional, faint)
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY + 40);
+                ctx.lineTo(centerX + offsetPixels, centerY + 40);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.stroke();
+                
+                // Label the angle on canvas
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                if (n <= 2 || calc.maxOrder < 4) { // Don't clutter if too many orders
+                    ctx.fillText(`n=${n}`, centerX + offsetPixels, centerY - 25);
+                    ctx.fillText(`${thetaDeg.toFixed(1)}°`, centerX + offsetPixels, centerY - 12);
+                    
+                    ctx.fillText(`n=-${n}`, centerX - offsetPixels, centerY - 25);
+                    ctx.fillText(`${thetaDeg.toFixed(1)}°`, centerX - offsetPixels, centerY - 12);
+                }
+            }
+        }
+
+        function drawSpot(x, y, color, intensity, radiusBase) {
+            // Main Spot
+            ctx.beginPath();
+            ctx.arc(x, y, radiusBase, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.globalAlpha = intensity;
+            ctx.shadowBlur = 20 * intensity;
+            ctx.shadowColor = color;
+            ctx.fill();
+            
+            // Core white hot center
+            ctx.beginPath();
+            ctx.arc(x, y, radiusBase * 0.3, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.globalAlpha = intensity * 0.8;
+            ctx.shadowBlur = 5;
+            ctx.fill();
+
+            // Reset context
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1.0;
+            
+            // Vertical slit look (since it's a grating)
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.2 * intensity;
+            ctx.fillRect(x - 2, 0, 4, canvas.height);
+            ctx.globalAlpha = 1.0;
+        }
+
+        // --- Event Listeners ---
+        lambdaSlider.addEventListener('input', (e) => {
+            state.lambda = parseInt(e.target.value);
+            updateUI();
+        });
+
+        linesSlider.addEventListener('input', (e) => {
+            state.linesPerMm = parseInt(e.target.value);
+            updateUI();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', updateUI);
+
+        // Initial Load
+        updateUI();
+
+    </script>
+</body>
+</html>

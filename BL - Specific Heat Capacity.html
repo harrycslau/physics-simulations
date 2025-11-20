@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>比熱容量模擬實驗</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Graphing -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom animations for the simulation visuals */
+        @keyframes bubble {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-20px) scale(1.2); opacity: 0; }
+        }
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .beaker-liquid {
+            transition: height 0.3s ease, background-color 0.5s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-600 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold"><i class="fa-solid fa-temperature-high mr-2"></i>物理實驗室：比熱容量</h1>
+            <span class="text-sm bg-blue-700 px-3 py-1 rounded-full">公式：E = mcΔT</span>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Panel: Controls & Settings -->
+        <div class="lg:col-span-4 space-y-6">
+            
+            <!-- Control Card -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
+                <h2 class="text-xl font-bold mb-4 text-gray-700">實驗設定</h2>
+                
+                <!-- Material Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-600 mb-2">選擇物質</label>
+                    <select id="materialSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
+                        <!-- Options populated by JS -->
+                    </select>
+                    <div class="mt-2 p-3 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-blue-800 font-semibold">
+                            比熱容量 (c): <span id="shcDisplay" class="text-lg font-bold">4200</span> J/kg°C
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Mass Slider -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-600 mb-2">
+                        質量 (m): <span id="massValue" class="font-bold text-blue-600">1.0</span> kg
+                    </label>
+                    <input type="range" id="massInput" min="0.1" max="5.0" step="0.1" value="1.0" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0.1 kg</span>
+                        <span>5.0 kg</span>
+                    </div>
+                </div>
+
+                <!-- Heater Power Slider -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-600 mb-2">
+                        加熱器功率 (P): <span id="powerValue" class="font-bold text-red-600">1000</span> W (J/s)
+                    </label>
+                    <input type="range" id="powerInput" min="500" max="2000" step="100" value="1000" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-500">
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="btnStart" class="bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> 開始加熱
+                    </button>
+                    <button id="btnPause" class="bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg font-bold transition flex items-center justify-center gap-2 hidden">
+                        <i class="fa-solid fa-pause"></i> 暫停
+                    </button>
+                    <button id="btnReset" class="bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> 重置
+                    </button>
+                </div>
+            </div>
+
+            <!-- Real-time Data -->
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-bold mb-3 text-gray-700">實時數據</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <span class="text-gray-600">溫度 (T)</span>
+                        <span class="font-mono font-bold text-xl text-red-600"><span id="tempDisplay">20.0</span>°C</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <span class="text-gray-600">已輸入能量 (E)</span>
+                        <span class="font-mono font-bold text-xl text-blue-600"><span id="energyDisplay">0</span> J</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">加熱時間 (t)</span>
+                        <span class="font-mono font-bold text-xl text-gray-800"><span id="timeDisplay">0.0</span> s</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visualization & Graph -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- Visual Simulation Area -->
+            <div class="bg-white rounded-xl shadow-lg p-6 h-64 relative overflow-hidden flex items-end justify-center border-b-4 border-gray-300 bg-gradient-to-t from-gray-100 to-white">
+                
+                <!-- Heater Base -->
+                <div class="absolute bottom-0 w-48 h-4 bg-gray-800 rounded-t-lg z-10 flex justify-center items-center">
+                    <div id="heaterCoil" class="w-40 h-2 bg-gray-600 rounded-full transition-colors duration-500"></div>
+                </div>
+                
+                <!-- Flame/Heat Effect -->
+                <div id="heatEffect" class="absolute bottom-4 w-48 h-12 opacity-0 transition-opacity duration-300 z-0 flex justify-center gap-2">
+                    <div class="w-2 h-8 bg-red-500 rounded-full animate-pulse"></div>
+                    <div class="w-2 h-10 bg-orange-500 rounded-full animate-pulse delay-75"></div>
+                    <div class="w-2 h-6 bg-yellow-500 rounded-full animate-pulse delay-150"></div>
+                </div>
+
+                <!-- The Substance Block/Beaker -->
+                <div class="relative z-20 mb-4">
+                    <!-- Thermometer -->
+                    <div class="absolute -right-16 bottom-0 h-48 w-8 bg-white border-2 border-gray-300 rounded-full shadow-md flex flex-col justify-end p-1">
+                        <div id="thermometerLiquid" class="w-full bg-red-500 rounded-b-full rounded-t-sm transition-all duration-100" style="height: 20%;"></div>
+                        <div class="absolute -right-8 top-0 text-xs text-gray-500">120°C</div>
+                        <div class="absolute -right-8 bottom-0 text-xs text-gray-500">0°C</div>
+                    </div>
+
+                    <!-- Material Container -->
+                    <div id="substanceContainer" class="w-40 transition-all duration-300 border-2 border-gray-400 bg-blue-400/50 backdrop-blur-sm relative overflow-hidden rounded-lg flex items-center justify-center shadow-inner" style="height: 100px;">
+                        <span class="text-white font-bold drop-shadow-md text-lg z-10 select-none" id="substanceLabel">水</span>
+                        <!-- Particle effects container -->
+                        <div id="particleContainer" class="absolute inset-0 overflow-hidden opacity-50"></div>
+                    </div>
+                    <div class="text-center mt-1 text-sm text-gray-500 font-medium" id="massVisualLabel">1.0 kg</div>
+                </div>
+            </div>
+
+            <!-- Graph Area -->
+            <div class="bg-white p-4 rounded-xl shadow-lg">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-lg font-bold text-gray-700">能量 vs 溫度 關係圖</h3>
+                    <div class="text-xs text-gray-500">斜率 (Slope) = 1 / (mc)</div>
+                </div>
+                <div class="relative h-64 w-full">
+                    <canvas id="chartCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Explanation Alert -->
+            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fa-solid fa-lightbulb text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-800">
+                            <span class="font-bold">觀察重點：</span> 
+                            比熱容量 (<span class="font-serif italic">c</span>) 越大的物質（如水），溫度上升得越慢。這代表它能儲存更多的熱能。看看比較「水」和「銅」的圖線斜率有什麼不同？
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- Data & Configuration ---
+        const materials = [
+            { id: 'water', name: '水 (Water)', c: 4200, color: '220, 38, 38', baseColor: '59, 130, 246', type: 'liquid' }, // Blue
+            { id: 'oil', name: '食用油 (Oil)', c: 2000, color: '234, 179, 8', baseColor: '250, 204, 21', type: 'liquid' }, // Yellow
+            { id: 'aluminum', name: '鋁 (Aluminum)', c: 900, color: '156, 163, 175', baseColor: '156, 163, 175', type: 'solid' }, // Gray
+            { id: 'iron', name: '鐵 (Iron)', c: 450, color: '75, 85, 99', baseColor: '107, 114, 128', type: 'solid' }, // Dark Gray
+            { id: 'copper', name: '銅 (Copper)', c: 385, color: '217, 119, 6', baseColor: '245, 158, 11', type: 'solid' }, // Bronze
+            { id: 'lead', name: '鉛 (Lead)', c: 130, color: '55, 65, 81', baseColor: '71, 85, 105', type: 'solid' } // Slate
+        ];
+
+        const INITIAL_TEMP = 20; // °C
+        const MAX_TEMP = 120; // °C
+        const UPDATE_INTERVAL = 50; // ms
+        
+        // --- State ---
+        let state = {
+            material: materials[0],
+            mass: 1.0, // kg
+            power: 1000, // Watts (J/s)
+            currentTemp: INITIAL_TEMP,
+            totalEnergy: 0, // Joules
+            timeElapsed: 0, // Seconds
+            isRunning: false,
+            timerId: null,
+            dataPoints: [] // For chart {x: Energy, y: Temp}
+        };
+
+        // --- DOM Elements ---
+        const els = {
+            select: document.getElementById('materialSelect'),
+            shcDisplay: document.getElementById('shcDisplay'),
+            massInput: document.getElementById('massInput'),
+            massValue: document.getElementById('massValue'),
+            massVisualLabel: document.getElementById('massVisualLabel'),
+            powerInput: document.getElementById('powerInput'),
+            powerValue: document.getElementById('powerValue'),
+            btnStart: document.getElementById('btnStart'),
+            btnPause: document.getElementById('btnPause'),
+            btnReset: document.getElementById('btnReset'),
+            tempDisplay: document.getElementById('tempDisplay'),
+            energyDisplay: document.getElementById('energyDisplay'),
+            timeDisplay: document.getElementById('timeDisplay'),
+            substanceContainer: document.getElementById('substanceContainer'),
+            substanceLabel: document.getElementById('substanceLabel'),
+            thermometerLiquid: document.getElementById('thermometerLiquid'),
+            heaterCoil: document.getElementById('heaterCoil'),
+            heatEffect: document.getElementById('heatEffect'),
+            particleContainer: document.getElementById('particleContainer'),
+            chartCanvas: document.getElementById('chartCanvas')
+        };
+
+        // --- Chart.js Initialization ---
+        let chart;
+        function initChart() {
+            const ctx = els.chartCanvas.getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '溫度 vs 能量',
+                        data: [],
+                        borderColor: 'rgb(37, 99, 235)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.5)',
+                        showLine: true,
+                        pointRadius: 0, // Hide points for smooth line
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false, // Disable animation for performance
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: { display: true, text: '輸入能量 (Joules)' },
+                            min: 0
+                        },
+                        y: {
+                            title: { display: true, text: '溫度 (°C)' },
+                            min: 0,
+                            max: MAX_TEMP
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `E: ${Math.round(context.parsed.x)} J, T: ${context.parsed.y.toFixed(1)}°C`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Initialization ---
+        function init() {
+            // Populate Select
+            materials.forEach(mat => {
+                const opt = document.createElement('option');
+                opt.value = mat.id;
+                opt.textContent = mat.name;
+                els.select.appendChild(opt);
+            });
+
+            // Event Listeners
+            els.select.addEventListener('change', handleMaterialChange);
+            els.massInput.addEventListener('input', handleMassChange);
+            els.powerInput.addEventListener('input', handlePowerChange);
+            els.btnStart.addEventListener('click', toggleSimulation);
+            els.btnPause.addEventListener('click', toggleSimulation);
+            els.btnReset.addEventListener('click', resetSimulation);
+
+            // Initial Update
+            initChart();
+            updateUI();
+            createParticles();
+        }
+
+        // --- Core Physics Loop ---
+        function physicsLoop() {
+            if (!state.isRunning || state.currentTemp >= MAX_TEMP) {
+                if (state.currentTemp >= MAX_TEMP) {
+                    stopSimulation();
+                    alert('已達到最高模擬溫度！');
+                }
+                return;
+            }
+
+            // Physics Calculation
+            // E = P * t
+            // Energy added in this step (Joules)
+            const dt = UPDATE_INTERVAL / 1000; // seconds
+            const energyStep = state.power * dt;
+            
+            state.totalEnergy += energyStep;
+            state.timeElapsed += dt;
+
+            // dT = Q / (m * c)
+            const tempChange = energyStep / (state.mass * state.material.c);
+            state.currentTemp += tempChange;
+
+            // Update Chart Data
+            // Only push data every 5th frame to keep chart performant
+            if (state.totalEnergy % (state.power * 0.2) < energyStep * 2) {
+                 state.dataPoints.push({ x: state.totalEnergy, y: state.currentTemp });
+                 chart.data.datasets[0].data = state.dataPoints;
+                 chart.update();
+            }
+
+            updateUI();
+            updateVisuals();
+        }
+
+        // --- Event Handlers ---
+
+        function handleMaterialChange(e) {
+            const selectedId = e.target.value;
+            state.material = materials.find(m => m.id === selectedId);
+            resetSimulation();
+        }
+
+        function handleMassChange(e) {
+            state.mass = parseFloat(e.target.value);
+            resetSimulation(); // Changing mass during heating complicates the graph, simpler to reset
+        }
+
+        function handlePowerChange(e) {
+            state.power = parseInt(e.target.value);
+            els.powerValue.textContent = state.power;
+        }
+
+        function toggleSimulation() {
+            state.isRunning = !state.isRunning;
+            
+            if (state.isRunning) {
+                els.btnStart.classList.add('hidden');
+                els.btnPause.classList.remove('hidden');
+                els.heaterCoil.classList.replace('bg-gray-600', 'bg-red-600');
+                els.heatEffect.style.opacity = '1';
+                state.timerId = setInterval(physicsLoop, UPDATE_INTERVAL);
+            } else {
+                stopSimulation();
+            }
+        }
+
+        function stopSimulation() {
+            state.isRunning = false;
+            clearInterval(state.timerId);
+            els.btnStart.classList.remove('hidden');
+            els.btnPause.classList.add('hidden');
+            els.heaterCoil.classList.replace('bg-red-600', 'bg-gray-600');
+            els.heatEffect.style.opacity = '0';
+        }
+
+        function resetSimulation() {
+            stopSimulation();
+            state.currentTemp = INITIAL_TEMP;
+            state.totalEnergy = 0;
+            state.timeElapsed = 0;
+            state.dataPoints = [{ x: 0, y: INITIAL_TEMP }];
+            
+            // Reset Chart
+            chart.data.datasets[0].data = state.dataPoints;
+            chart.scales.x.max = undefined; // Auto scale
+            chart.update();
+
+            updateUI();
+            updateVisuals();
+        }
+
+        // --- UI & Visual Updates ---
+
+        function updateUI() {
+            els.shcDisplay.textContent = state.material.c;
+            els.massValue.textContent = state.mass.toFixed(1);
+            els.massVisualLabel.textContent = state.mass.toFixed(1) + ' kg';
+            
+            els.tempDisplay.textContent = state.currentTemp.toFixed(1);
+            els.energyDisplay.textContent = Math.floor(state.totalEnergy);
+            els.timeDisplay.textContent = state.timeElapsed.toFixed(1);
+        }
+
+        function updateVisuals() {
+            // 1. Substance Appearance
+            // Change Color based on Temperature (Blue -> Red interpolation)
+            // Map temp 20-120 to hue 240 (blue) - 0 (red)
+            const progress = (state.currentTemp - 20) / (100); // 0 to 1
+            const clampedProgress = Math.min(Math.max(progress, 0), 1);
+            
+            // Substance Height based on mass (Linear scaling for visual)
+            // Min height 60px, Max height 180px
+            const h = 40 + (state.mass * 30);
+            els.substanceContainer.style.height = `${h}px`;
+            els.substanceContainer.style.width = state.material.type === 'liquid' ? '160px' : '120px'; // Solids are narrower blocks
+            
+            // Color Logic
+            // Base color defined in material, but we blend it with Red as it heats
+            const baseRGB = state.material.baseColor.split(',').map(Number);
+            const hotRGB = [255, 50, 50];
+            
+            const currentR = Math.round(baseRGB[0] + (hotRGB[0] - baseRGB[0]) * clampedProgress);
+            const currentG = Math.round(baseRGB[1] + (hotRGB[1] - baseRGB[1]) * clampedProgress);
+            const currentB = Math.round(baseRGB[2] + (hotRGB[2] - baseRGB[2]) * clampedProgress);
+
+            els.substanceContainer.style.backgroundColor = `rgba(${currentR}, ${currentG}, ${currentB}, 0.8)`;
+            els.substanceLabel.textContent = state.material.name.split(' ')[0];
+
+            // 2. Thermometer Level
+            // Map 0-120C to 0-100% height
+            const thermHeight = (state.currentTemp / 120) * 100;
+            els.thermometerLiquid.style.height = `${Math.min(thermHeight, 100)}%`;
+
+            // 3. Particle Speed (Visual cue for kinetic energy)
+            updateParticles(clampedProgress);
+        }
+
+        // Simple particle system for kinetic energy visualization
+        function createParticles() {
+            els.particleContainer.innerHTML = '';
+            for(let i=0; i<15; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                const size = Math.random() * 6 + 4;
+                p.style.width = `${size}px`;
+                p.style.height = `${size}px`;
+                p.style.left = `${Math.random() * 100}%`;
+                p.style.top = `${Math.random() * 100}%`;
+                els.particleContainer.appendChild(p);
+            }
+        }
+
+        function updateParticles(heatProgress) {
+            // heatProgress is 0 to 1
+            const speed = 1 + (heatProgress * 10); // Speed multiplier
+            const shake = heatProgress * 5; // Jitter amount
+            
+            const particles = els.particleContainer.children;
+            for(let p of particles) {
+                // Simple jitter animation manually updated roughly or via CSS override? 
+                // CSS is better for performance. Let's update inline styles for transform.
+                const dx = (Math.random() - 0.5) * shake;
+                const dy = (Math.random() - 0.5) * shake;
+                p.style.transform = `translate(${dx}px, ${dy}px)`;
+            }
+        }
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>
