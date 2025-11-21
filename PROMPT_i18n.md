@@ -22,5 +22,7 @@
     *   **Chinese:** Provide "clean" translations. **Do not** include English words in parentheses (e.g., use "靜止", NOT "靜止 (Static)").
 6.  **Dynamic Text:**
     *   If the simulation has JavaScript updating text dynamically (e.g., status messages like "Heating", "Boiling"), extract that logic into a function and use the `translations` object to fetch the correct string based on the current language.
+7.  **Comments**
+    *   If a comment in the source code is in Chinese, change it to English.
 
 **Output:** Provide the full, updated HTML code.
