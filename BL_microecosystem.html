@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微生境氣體循環模擬實驗</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 自定義動畫與樣式 */
+        .sky-gradient {
+            transition: background 1s ease;
+        }
+        .day-sky {
+            background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
+        }
+        .night-sky {
+            background: linear-gradient(to bottom, #0B1026, #2B32B2);
+            color: white;
+        }
+        .bubble {
+            position: absolute;
+            bottom: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: floatUp 4s infinite linear;
+            opacity: 0;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 0.8; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <!-- 頂部標題 -->
+    <header class="bg-teal-700 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold"><i class="fas fa-leaf mr-2"></i>微生境氣體循環模擬器</h1>
+            <span class="text-sm bg-teal-800 px-3 py-1 rounded-full">科學實驗模擬</span>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- 左側：控制與視覺化 -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- 生態缸視覺化 -->
+            <div id="ecosystem-container" class="bg-white rounded-xl shadow-lg overflow-hidden border-4 border-gray-300 relative h-80 transition-colors duration-1000 day-sky">
+                
+                <!-- 天空狀態 (日/月) -->
+                <div class="absolute top-4 right-4 text-5xl transition-all duration-1000" id="celestial-body">
+                    ☀️
+                </div>
+                
+                <!-- 時間顯示 -->
+                <div class="absolute top-4 left-4 bg-black/30 text-white px-3 py-1 rounded backdrop-blur-sm">
+                    <div class="text-xs uppercase font-bold">時間</div>
+                    <div class="text-xl font-mono" id="clock-display">06:00</div>
+                </div>
+
+                <!-- 生物層 -->
+                <div class="absolute bottom-0 w-full h-24 bg-amber-800 border-t-4 border-green-800 flex justify-around items-end px-4 pb-2">
+                    <!-- 植物區 -->
+                    <div id="plants-container" class="flex space-x-2 text-4xl text-green-600">
+                        <i class="fas fa-tree"></i><i class="fas fa-seedling"></i>
+                    </div>
+                    <!-- 動物區 -->
+                    <div id="animals-container" class="flex space-x-2 text-3xl text-gray-700">
+                        <i class="fas fa-frog"></i>
+                    </div>
+                </div>
+
+                <!-- 氣泡效果 (示意氣體交換) -->
+                <div id="bubbles-layer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+                
+                <!-- 狀態標籤 -->
+                <div class="absolute bottom-28 left-1/2 transform -translate-x-1/2 bg-white/80 px-4 py-2 rounded-lg shadow text-center w-3/4">
+                    <p id="status-text" class="font-bold text-teal-700">正在進行光合作用</p>
+                    <p class="text-xs text-gray-600">淨氣體變化</p>
+                </div>
+            </div>
+
+            <!-- 控制面板 -->
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2">實驗參數設定</h2>
+                
+                <div class="space-y-4">
+                    <!-- 播放控制 -->
+                    <div class="flex space-x-2">
+                        <button id="btn-play" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded transition" onclick="toggleSimulation()">
+                            <i class="fas fa-play mr-2"></i>開始
+                        </button>
+                        <button class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded transition" onclick="resetSimulation()">
+                            <i class="fas fa-redo mr-2"></i>重置
+                        </button>
+                    </div>
+
+                    <div class="border-t pt-4">
+                        <label class="block text-sm font-medium mb-1">植物數量 (生產者)</label>
+                        <input type="range" id="plant-slider" min="1" max="10" value="5" class="w-full accent-green-600" oninput="updateSettings()">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>少</span>
+                            <span id="plant-count">5</span>
+                            <span>多</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">動物數量 (消費者)</label>
+                        <input type="range" id="animal-slider" min="0" max="5" value="2" class="w-full accent-orange-600" oninput="updateSettings()">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>無</span>
+                            <span id="animal-count">2</span>
+                            <span>多</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">模擬速度</label>
+                        <select id="speed-select" class="w-full border rounded p-2 bg-gray-50">
+                            <option value="200">慢速 (仔細觀察)</option>
+                            <option value="100" selected>正常</option>
+                            <option value="20">快速 (觀察趨勢)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：數據圖表與分析 -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- 圖表卡片 -->
+            <div class="bg-white p-4 rounded-xl shadow-lg h-96 flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-lg font-bold text-gray-700">氣體濃度變化趨勢圖</h2>
+                    <div class="flex space-x-4 text-sm">
+                        <div class="flex items-center"><span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>氧氣 ($O_2$)</div>
+                        <div class="flex items-center"><span class="w-3 h-3 bg-red-500 rounded-full mr-2"></span>二氧化碳 ($CO_2$)</div>
+                    </div>
+                </div>
+                <div class="flex-1 relative w-full">
+                    <canvas id="gasChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 儀表板數據 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 text-center">
+                    <h3 class="text-gray-500 text-sm uppercase">當前氧氣濃度</h3>
+                    <p class="text-3xl font-bold text-blue-600" id="o2-display">21.0%</p>
+                    <p class="text-xs text-gray-400 mt-1">初始值: 21.0%</p>
+                </div>
+                <div class="bg-red-50 p-4 rounded-xl border border-red-200 text-center">
+                    <h3 class="text-gray-500 text-sm uppercase">當前二氧化碳濃度</h3>
+                    <p class="text-3xl font-bold text-red-600" id="co2-display">0.04%</p>
+                    <p class="text-xs text-gray-400 mt-1">初始值: 0.04%</p>
+                </div>
+            </div>
+
+            <!-- 教學說明 -->
+            <div class="bg-yellow-50 p-5 rounded-xl border-l-4 border-yellow-400 text-sm">
+                <h3 class="font-bold text-yellow-800 mb-2"><i class="fas fa-lightbulb mr-2"></i>老師的觀察筆記：</h3>
+                <ul class="list-disc list-inside space-y-1 text-yellow-900">
+                    <li><strong>白天 (06:00 - 18:00)：</strong> 光合作用速率 > 呼吸作用速率。植物釋放氧氣，吸收二氧化碳。注意圖表中藍線上升，紅線下降。</li>
+                    <li><strong>夜晚 (18:00 - 06:00)：</strong> 光合作用停止。植物和動物都只進行呼吸作用，消耗氧氣並釋放二氧化碳。注意圖表中趨勢反轉。</li>
+                    <li><strong>補償點：</strong> 這是光合作用消耗的 $CO_2$ 與呼吸作用產生的 $CO_2$ 相等的時刻（通常在黎明和黃昏）。</li>
+                </ul>
+            </div>
+
+        </div>
+    </main>
+
+<script>
+/**
+ * 模擬器邏輯
+ */
+
+// 狀態變數
+let isRunning = false;
+let timer = null;
+let hour = 6; // 從早上 6 點開始
+let minute = 0;
+let dayCount = 1;
+
+// 初始濃度 (模擬值，非嚴格大氣真實值，為了圖表明顯)
+let o2 = 21.0; 
+let co2 = 0.04;
+
+// 參數係數 (已根據現實調整，大幅降低數值)
+const PHOTOSYNTHESIS_RATE = 0.008; // 降低：每單位植物每小時產生的 O2
+const PLANT_RESPIRATION = 0.001;   // 降低：每單位植物每小時消耗的 O2
+const ANIMAL_RESPIRATION = 0.0035;  // 降低：每單位動物每小時消耗的 O2
+
+// 使用者設定
+let numPlants = 5;
+let numAnimals = 2;
+let simulationSpeed = 100;
+
+// Chart.js 設定
+const ctx = document.getElementById('gasChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            {
+                label: '氧氣 (O2)',
+                data: [],
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                yAxisID: 'y'
+            },
+            {
+                label: '二氧化碳 (CO2)',
+                data: [],
+                borderColor: 'rgb(239, 68, 68)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4,
+                yAxisID: 'y1'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    title: (tooltipItems) => {
+                        return `第 ${dayCount} 天 ${tooltipItems[0].label}`;
+                    },
+                    label: (context) => {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed.y !== null) {
+                            // 增加小數點位數以顯示微小變化
+                            label += context.parsed.y.toFixed(4) + '%';
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                title: { display: true, text: '時間 (小時)' },
+                grid: { display: false }
+            },
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: { display: true, text: '氧氣濃度 (%)' },
+                // 讓 Y 軸動態適應，不再固定大範圍，以便觀察微小變化
+                suggestedMin: 20.8,
+                suggestedMax: 21.2
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: { display: true, text: 'CO2 濃度 (%)' },
+                grid: { drawOnChartArea: false }, 
+                // CO2 範圍調整為更精細
+                suggestedMin: 0,
+                suggestedMax: 0.1
+            }
+        }
+    }
+});
+
+// 更新 DOM 元素
+const clockDisplay = document.getElementById('clock-display');
+const container = document.getElementById('ecosystem-container');
+const celestial = document.getElementById('celestial-body');
+const statusText = document.getElementById('status-text');
+const o2Display = document.getElementById('o2-display');
+const co2Display = document.getElementById('co2-display');
+const btnPlay = document.getElementById('btn-play');
+const bubblesLayer = document.getElementById('bubbles-layer');
+
+// 初始化圖表
+function initChart() {
+    // 預填充幾個數據點讓圖表不空白
+    addDataPoint(true);
+}
+
+// 更新設定
+function updateSettings() {
+    numPlants = parseInt(document.getElementById('plant-slider').value);
+    numAnimals = parseInt(document.getElementById('animal-slider').value);
+    simulationSpeed = parseInt(document.getElementById('speed-select').value);
+    
+    document.getElementById('plant-count').innerText = numPlants;
+    document.getElementById('animal-count').innerText = numAnimals;
+
+    // 重新繪製植物
+    const plantContainer = document.getElementById('plants-container');
+    plantContainer.innerHTML = '';
+    for(let i=0; i<numPlants; i++) {
+        const icon = Math.random() > 0.5 ? '<i class="fas fa-tree"></i>' : '<i class="fas fa-seedling"></i>';
+        plantContainer.innerHTML += icon;
+    }
+
+    // 重新繪製動物
+    const animalContainer = document.getElementById('animals-container');
+    animalContainer.innerHTML = '';
+    for(let i=0; i<numAnimals; i++) {
+        const icons = ['<i class="fas fa-frog"></i>', '<i class="fas fa-crow"></i>', '<i class="fas fa-bug"></i>'];
+        const icon = icons[Math.floor(Math.random() * icons.length)];
+        animalContainer.innerHTML += icon;
+    }
+
+    // 如果正在運行，更新計時器速度
+    if (isRunning) {
+        clearInterval(timer);
+        timer = setInterval(tick, simulationSpeed);
+    }
+}
+
+// 產生氣泡動畫
+function createBubbles(type) {
+    if (Math.random() > 0.7) return; // 不要太頻繁
+
+    const bubble = document.createElement('div');
+    bubble.classList.add('bubble');
+    
+    // 隨機位置
+    const left = Math.random() * 100;
+    bubble.style.left = `${left}%`;
+    
+    // 大小
+    const size = Math.random() * 10 + 5;
+    bubble.style.width = `${size}px`;
+    bubble.style.height = `${size}px`;
+
+    // 顏色 (O2 藍色, CO2 紅色)
+    if (type === 'O2') {
+        bubble.style.background = 'rgba(59, 130, 246, 0.6)';
+    } else {
+        bubble.style.background = 'rgba(239, 68, 68, 0.6)';
+    }
+
+    bubblesLayer.appendChild(bubble);
+
+    // 清除 DOM
+    setTimeout(() => {
+        bubble.remove();
+    }, 4000);
+}
+
+// 核心模擬邏輯 (每 tick 代表 10-15 分鐘)
+function tick() {
+    minute += 15;
+    if (minute >= 60) {
+        minute = 0;
+        hour++;
+        if (hour >= 24) {
+            hour = 0;
+            dayCount++;
+        }
+        // 每整點記錄一次數據
+        addDataPoint();
+    }
+
+    // 判斷日夜 (06:00 - 18:00 為白天)
+    const isDay = hour >= 6 && hour < 18;
+
+    // 計算變化量
+    // 呼吸作用 (24小時進行): 植物 + 動物
+    const totalRespiration = (numPlants * PLANT_RESPIRATION) + (numAnimals * ANIMAL_RESPIRATION);
+    
+    // 光合作用 (只在白天): 植物
+    // 限制因子：如果 CO2 過低，光合作用效率下降 (現實模擬)
+    let co2LimitingFactor = 1;
+    if (co2 < 0.01) {
+        co2LimitingFactor = co2 * 100; // 當 CO2 < 0.01% 時，效率線性下降
+    }
+
+    let currentPhotoRate = 0;
+    if (isDay) {
+        // 將 6-18 映射到 0-PI
+        const dayProgress = (hour - 6 + minute/60) / 12; // 0 to 1
+        const sunIntensity = Math.sin(dayProgress * Math.PI); 
+        currentPhotoRate = numPlants * PHOTOSYNTHESIS_RATE * sunIntensity * co2LimitingFactor;
+    }
+
+    // 更新氣體
+    // O2: +光合 -呼吸
+    let o2Change = currentPhotoRate - totalRespiration;
+    // CO2: -光合 +呼吸 (反向)
+    let co2Change = totalRespiration - currentPhotoRate;
+
+    // 阻尼係數：讓每次 tick 的變化更平滑微小
+    const DAMPING = 0.05; 
+
+    o2 += o2Change * DAMPING; 
+    co2 += co2Change * DAMPING;
+
+    // 邊界限制
+    if (o2 < 0) o2 = 0;
+    if (o2 > 30) o2 = 30; 
+    if (co2 < 0) co2 = 0; // CO2 不能為負
+    
+    // 更新視覺
+    updateVisuals(isDay, currentPhotoRate, totalRespiration);
+}
+
+function updateVisuals(isDay, photoRate, respRate) {
+    // 時間
+    const hStr = hour.toString().padStart(2, '0');
+    const mStr = minute.toString().padStart(2, '0');
+    clockDisplay.innerText = `${hStr}:${mStr}`;
+
+    // 日夜切換
+    if (isDay) {
+        container.classList.remove('night-sky');
+        container.classList.add('day-sky');
+        celestial.innerText = '☀️';
+        
+        // 狀態文字
+        if (photoRate > respRate) {
+            statusText.innerHTML = `<span class="text-blue-600"><i class="fas fa-arrow-up"></i> 氧氣增加</span> <span class="text-red-600 ml-2"><i class="fas fa-arrow-down"></i> CO2 減少</span>`;
+            createBubbles('O2');
+        } else {
+            // 剛日出或日落時可能呼吸大於光合
+            statusText.innerHTML = `<span class="text-gray-600">光合作用微弱 (補償點附近)</span>`;
+        }
+    } else {
+        container.classList.remove('day-sky');
+        container.classList.add('night-sky');
+        celestial.innerText = '🌙';
+        statusText.innerHTML = `<span class="text-blue-400"><i class="fas fa-arrow-down"></i> 氧氣減少</span> <span class="text-red-400 ml-2"><i class="fas fa-arrow-up"></i> CO2 增加</span>`;
+        createBubbles('CO2');
+    }
+
+    // 數據面板 (增加小數位數顯示精細變化)
+    o2Display.innerText = o2.toFixed(3) + '%';
+    co2Display.innerText = co2.toFixed(4) + '%';
+}
+
+function addDataPoint(isInit = false) {
+    const timeLabel = `${hour.toString().padStart(2, '0')}:00`;
+    
+    // 限制圖表顯示的數據點數量 (例如最近 48 點)
+    if (chart.data.labels.length > 48) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+        chart.data.datasets[1].data.shift();
+    }
+
+    chart.data.labels.push(timeLabel);
+    chart.data.datasets[0].data.push(o2);
+    chart.data.datasets[1].data.push(co2);
+    
+    if (!isInit) {
+        chart.update('none'); // none mode for performance
+    } else {
+        chart.update();
+    }
+}
+
+// 控制功能
+function toggleSimulation() {
+    if (isRunning) {
+        clearInterval(timer);
+        btnPlay.innerHTML = '<i class="fas fa-play mr-2"></i>繼續';
+        btnPlay.classList.remove('bg-red-600', 'hover:bg-red-700');
+        btnPlay.classList.add('bg-green-600', 'hover:bg-green-700');
+    } else {
+        timer = setInterval(tick, simulationSpeed);
+        btnPlay.innerHTML = '<i class="fas fa-pause mr-2"></i>暫停';
+        btnPlay.classList.remove('bg-green-600', 'hover:bg-green-700');
+        btnPlay.classList.add('bg-red-600', 'hover:bg-red-700');
+    }
+    isRunning = !isRunning;
+}
+
+function resetSimulation() {
+    clearInterval(timer);
+    isRunning = false;
+    hour = 6;
+    minute = 0;
+    dayCount = 1;
+    o2 = 21.0;
+    co2 = 0.04;
+    
+    // 清空圖表
+    chart.data.labels = [];
+    chart.data.datasets[0].data = [];
+    chart.data.datasets[1].data = [];
+    
+    btnPlay.innerHTML = '<i class="fas fa-play mr-2"></i>開始';
+    btnPlay.classList.remove('bg-red-600', 'hover:bg-red-700');
+    btnPlay.classList.add('bg-green-600', 'hover:bg-green-700');
+    
+    updateSettings(); // 重繪生物
+    updateVisuals(true, 0, 0);
+    initChart();
+    
+    // Force update chart
+    chart.update();
+}
+
+// 初始化
+updateSettings();
+updateVisuals(true, 0, 0);
+initChart();
+
+</script>
+</body>
+</html>

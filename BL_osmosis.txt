@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生物科：滲透作用模擬器 (Osmosis Simulator)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        canvas {
+            border: 1px solid #ccc;
+            background-color: #f0f9ff; /* 淺藍色背景代表水環境 */
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .arrow-box {
+            transition: all 0.3s ease;
+        }
+        /* 模擬膜的虛線樣式由 Canvas 繪製，這裡處理 UI */
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+        <!-- Header -->
+        <header class="mb-6 text-center border-b pb-4">
+            <h1 class="text-2xl md:text-3xl font-bold text-blue-600 mb-2">滲透作用模擬器 (Osmosis Simulator)</h1>
+            <p class="text-gray-600">觀察水分子如何穿過差異透性膜 (Differentially Permeable Membrane)</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Controls -->
+            <div class="md:col-span-1 space-y-6 bg-gray-50 p-4 rounded-lg border border-gray-200 h-fit">
+                <h2 class="font-bold text-lg text-gray-700 border-b pb-2">實驗設定</h2>
+                
+                <!-- Left Side Control -->
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-blue-800">左側溶液</label>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>純水</span>
+                        <span>高濃度</span>
+                    </div>
+                    <label for="leftSolute" class="text-xs text-gray-500">溶質濃度 (Solute Conc.)</label>
+                    <input type="range" id="leftSolute" min="0" max="60" value="10" class="w-full h-2 bg-red-200 rounded-lg appearance-none cursor-pointer accent-red-500">
+                    <div class="mt-1 text-xs font-semibold text-blue-600">
+                        水勢: <span id="leftPotText">高</span>
+                    </div>
+                </div>
+
+                <hr class="border-gray-300">
+
+                <!-- Right Side Control -->
+                <div>
+                    <label class="block text-sm font-bold mb-1 text-blue-800">右側溶液</label>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>純水</span>
+                        <span>高濃度</span>
+                    </div>
+                    <label for="rightSolute" class="text-xs text-gray-500">溶質濃度 (Solute Conc.)</label>
+                    <input type="range" id="rightSolute" min="0" max="60" value="50" class="w-full h-2 bg-red-200 rounded-lg appearance-none cursor-pointer accent-red-500">
+                    <div class="mt-1 text-xs font-semibold text-blue-600">
+                        水勢: <span id="rightPotText">低</span>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button id="resetBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
+                        重置實驗
+                    </button>
+                </div>
+
+                <!-- Legend -->
+                <div class="bg-white p-3 rounded border text-sm">
+                    <h3 class="font-bold mb-2 text-gray-700">圖例 (Legend)</h3>
+                    <div class="flex items-center mb-2">
+                        <span class="w-3 h-3 rounded-full bg-blue-400 inline-block mr-2"></span>
+                        <span>水分子 (可穿過膜)</span>
+                    </div>
+                    <div class="flex items-center mb-2">
+                        <span class="w-4 h-4 rounded-full bg-red-500 inline-block mr-2 border border-red-700"></span>
+                        <span>溶質分子 (被膜阻擋)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-1 h-4 border-l-2 border-dashed border-gray-600 inline-block mr-3 ml-1"></span>
+                        <span>差異透性膜</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation Canvas Area -->
+            <div class="md:col-span-2 flex flex-col items-center relative">
+                <!-- Dynamic Flow Indicator -->
+                <div id="flowIndicator" class="absolute top-4 bg-white/90 px-4 py-2 rounded-full shadow-md border border-blue-200 font-bold text-blue-800 text-center z-10 pointer-events-none transition-opacity duration-500 opacity-0">
+                    淨移動方向: <span id="flowArrow">↔</span>
+                </div>
+
+                <canvas id="simCanvas" width="600" height="400" class="w-full max-w-[600px] bg-white"></canvas>
+                
+                <div class="mt-4 text-sm text-gray-600 bg-yellow-50 p-3 rounded border border-yellow-200 w-full">
+                    <strong>觀察重點：</strong> 
+                    <ul class="list-disc list-inside mt-1 space-y-1">
+                        <li>中間的虛線代表<strong>差異透性膜</strong>。</li>
+                        <li>紅色的溶質太大，無法穿過膜上的孔隙。</li>
+                        <li>藍色的水分子很小，可以自由穿梭。</li>
+                        <li>水會從<strong>高水勢</strong>（溶質少）流向<strong>低水勢</strong>（溶質多）。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Configuration
+        const PARTICLE_RADIUS_WATER = 3;
+        const PARTICLE_RADIUS_SOLUTE = 8; // Solute is much bigger
+        const MAX_PARTICLES_PER_SIDE = 150; 
+        const SPEED = 1.5;
+        
+        let particles = [];
+        let animationId;
+        
+        // DOM Elements
+        const leftInput = document.getElementById('leftSolute');
+        const rightInput = document.getElementById('rightSolute');
+        const leftPotText = document.getElementById('leftPotText');
+        const rightPotText = document.getElementById('rightPotText');
+        const flowIndicator = document.getElementById('flowIndicator');
+        const flowArrow = document.getElementById('flowArrow');
+        const resetBtn = document.getElementById('resetBtn');
+
+        class Particle {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type; // 'water' or 'solute'
+                this.radius = type === 'water' ? PARTICLE_RADIUS_WATER : PARTICLE_RADIUS_SOLUTE;
+                this.color = type === 'water' ? '#60a5fa' : '#ef4444'; // Tailwind blue-400 / red-500
+                
+                // Random velocity
+                const angle = Math.random() * Math.PI * 2;
+                this.vx = Math.cos(angle) * SPEED;
+                this.vy = Math.sin(angle) * SPEED;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Bounce off outer walls
+                if (this.x - this.radius < 0) {
+                    this.x = this.radius;
+                    this.vx *= -1;
+                }
+                if (this.x + this.radius > canvas.width) {
+                    this.x = canvas.width - this.radius;
+                    this.vx *= -1;
+                }
+                if (this.y - this.radius < 0) {
+                    this.y = this.radius;
+                    this.vy *= -1;
+                }
+                if (this.y + this.radius > canvas.height) {
+                    this.y = canvas.height - this.radius;
+                    this.vy *= -1;
+                }
+
+                // Membrane Interaction (The Core Logic)
+                const membraneX = canvas.width / 2;
+                
+                if (this.type === 'solute') {
+                    // Solute bounces off the membrane (cannot pass)
+                    // Check if hitting membrane from left
+                    if (this.x + this.radius > membraneX && this.x < membraneX) {
+                        this.x = membraneX - this.radius;
+                        this.vx *= -1;
+                    }
+                    // Check if hitting membrane from right
+                    else if (this.x - this.radius < membraneX && this.x > membraneX) {
+                        this.x = membraneX + this.radius;
+                        this.vx *= -1;
+                    }
+                } else {
+                    // Water passes through membrane
+                    // No collision logic with membrane needed
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                // Add stroke to solute to make it look "solid"
+                if (this.type === 'solute') {
+                    ctx.strokeStyle = '#b91c1c';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function init() {
+            particles = [];
+            
+            const leftSoluteCount = parseInt(leftInput.value);
+            const rightSoluteCount = parseInt(rightInput.value);
+            
+            // Key Concept: High Solute = Low Water Potential.
+            // In a fixed volume, if we add solute, we simulate displacement by reducing water slightly,
+            // or simply crowding. To emphasize the gradient, let's scale water count inversely to solute.
+            // Base water count is high.
+            
+            const leftWaterCount = MAX_PARTICLES_PER_SIDE - leftSoluteCount;
+            const rightWaterCount = MAX_PARTICLES_PER_SIDE - rightSoluteCount;
+
+            // Spawn Left Side Particles
+            spawnParticles(0, canvas.width/2, leftSoluteCount, 'solute');
+            spawnParticles(0, canvas.width/2, leftWaterCount, 'water');
+
+            // Spawn Right Side Particles
+            spawnParticles(canvas.width/2, canvas.width, rightSoluteCount, 'solute');
+            spawnParticles(canvas.width/2, canvas.width, rightWaterCount, 'water');
+
+            updateLabels();
+        }
+
+        function spawnParticles(minX, maxX, count, type) {
+            for (let i = 0; i < count; i++) {
+                const radius = type === 'water' ? PARTICLE_RADIUS_WATER : PARTICLE_RADIUS_SOLUTE;
+                const x = Math.random() * (maxX - minX - 2*radius) + minX + radius;
+                const y = Math.random() * (canvas.height - 2*radius) + radius;
+                particles.push(new Particle(x, y, type));
+            }
+        }
+
+        function updateLabels() {
+            const lVal = parseInt(leftInput.value);
+            const rVal = parseInt(rightInput.value);
+
+            // Update Water Potential Text
+            // Less Solute = Higher Potential
+            if (lVal < 20) leftPotText.innerText = "極高";
+            else if (lVal < 40) leftPotText.innerText = "中等";
+            else leftPotText.innerText = "低";
+
+            if (rVal < 20) rightPotText.innerText = "極高";
+            else if (rVal < 40) rightPotText.innerText = "中等";
+            else rightPotText.innerText = "低";
+
+            // Update Flow Indicator
+            flowIndicator.style.opacity = "1";
+            if (Math.abs(lVal - rVal) < 10) {
+                flowArrow.innerHTML = "動態平衡 (Net flow ≈ 0)";
+                flowIndicator.className = "absolute top-4 bg-gray-100 px-4 py-2 rounded-full shadow-md border border-gray-300 text-gray-600 font-bold text-center z-10 pointer-events-none transition-all";
+            } else if (lVal < rVal) {
+                // Left has less solute (Higher potential) -> Flows to Right
+                flowArrow.innerHTML = "淨移動向右 ➡";
+                flowIndicator.className = "absolute top-4 bg-blue-100 px-4 py-2 rounded-full shadow-md border border-blue-300 text-blue-800 font-bold text-center z-10 pointer-events-none transition-all";
+            } else {
+                // Right has less solute -> Flows to Left
+                flowArrow.innerHTML = "⬅ 淨移動向左";
+                flowIndicator.className = "absolute top-4 bg-blue-100 px-4 py-2 rounded-full shadow-md border border-blue-300 text-blue-800 font-bold text-center z-10 pointer-events-none transition-all";
+            }
+        }
+
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Membrane
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]); // Dashed line
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.strokeStyle = '#475569'; // Slate-600
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset dash
+
+            // Draw Membrane Pores (Visual effect only)
+            // Draw little circles along the line to symbolize pores
+            ctx.fillStyle = '#fff';
+            for(let y=10; y<canvas.height; y+=20) {
+                ctx.beginPath();
+                ctx.arc(canvas.width/2, y, 2, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            // Draw "Side" labels on canvas background
+            ctx.font = "20px Arial";
+            ctx.fillStyle = "rgba(0,0,0,0.1)";
+            ctx.textAlign = "center";
+            ctx.fillText("左側", canvas.width * 0.25, canvas.height / 2);
+            ctx.fillText("右側", canvas.width * 0.75, canvas.height / 2);
+
+            // Update and Draw Particles
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+        }
+
+        // Event Listeners
+        leftInput.addEventListener('input', () => {
+            // Debounce simple logic: re-init on change to prevent chaos, 
+            // or allows dynamic adding. For education, reset is cleaner to show initial state vs outcome.
+            // But let's try to just update labels first, then reset on mouse up?
+            // Let's just re-init for clarity of "Starting Conditions".
+            init();
+        });
+
+        rightInput.addEventListener('input', () => {
+            init();
+        });
+
+        resetBtn.addEventListener('click', init);
+
+        // Start
+        init();
+        animate();
+
+    </script>
+</body>
+</html>
