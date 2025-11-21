@@ -1,25 +1,431 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-  <title>GitHub Page for Mr. B. Leung</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Physics Simulations</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      /* Slate 900 */
+      color: #f8fafc;
+      /* Slate 50 */
+      overflow-x: hidden;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    /* Card Hover Effect */
+    .sim-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .sim-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Lazy Load Animation */
+    .fade-in-section {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+      will-change: opacity, visibility;
+    }
+
+    .fade-in-section.is-visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* Particle Canvas */
+    #particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+  </style>
 </head>
 
-<body>
-  <h1>Gemini Pro 3 Demo by Mr. B. Leung</h1>
-  <hr>
-  <h2>Heat and Gases</h2>
-  <p><a href="simulations/heat-and-gases/air-conditioner.html">Air-Conditioner</a></p>
-  <p><a href="simulations/heat-and-gases/convection.html">Convection</a></p>
-  <p><a href="simulations/heat-and-gases/specific-heat-capacity.html">Specific Heat Capacity</a></p>
+<body class="min-h-screen flex flex-col relative">
 
-  <h2>Optics and Wave Motion</h2>
-  <p><a href="simulations/optics-and-wave-motion/diffraction-grating.html">Diffraction Grating</a></p>
-  <p><a href="simulations/optics-and-wave-motion/reflection-of-light.html">Reflection of Light</a></p>
-  <p><a href="simulations/optics-and-wave-motion/snells-law.html">Snell's Law</a></p>
+  <!-- Particle Background -->
+  <canvas id="particles"></canvas>
 
-  <h2>Biology</h2>
-  <p><a href="simulations/biology/micro-ecosystem.html">Micro-Ecosystem</a></p>
-  <p><a href="simulations/biology/osmosis.html">Osmosis</a></p>
+  <!-- Language Selector -->
+  <div class="absolute top-4 right-4 z-50">
+    <div class="flex bg-slate-800/80 backdrop-blur-sm rounded-full p-1 border border-slate-700 shadow-lg">
+      <button onclick="setLanguage('en-US')" id="btn-en"
+        class="px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-slate-400 hover:text-white">
+        EN
+      </button>
+      <button onclick="setLanguage('zh-HK')" id="btn-zh"
+        class="px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-slate-400 hover:text-white">
+        繁
+      </button>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <header class="pt-20 pb-12 px-4 text-center relative z-10">
+    <h1
+      class="text-5xl md:text-7xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 tracking-tight"
+      data-i18n="siteTitle">
+      Physics Sim
+    </h1>
+    <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-8 font-light" data-i18n="siteTagline">
+      Interactive simulations for exploring the physical world.
+    </p>
+
+    <!-- Search Bar -->
+    <div class="max-w-md mx-auto relative group">
+      <div
+        class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full blur opacity-30 group-hover:opacity-75 transition duration-500">
+      </div>
+      <div class="relative">
+        <input type="text" id="searchInput"
+          class="w-full bg-slate-900/90 text-white placeholder-slate-500 border border-slate-700 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-xl transition-all"
+          placeholder="Search simulations..." data-i18n-placeholder="searchPlaceholder">
+        <svg class="w-5 h-5 text-slate-500 absolute left-4 top-3.5" fill="none" stroke="currentColor"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="simulation-container" class="flex-grow container mx-auto px-4 pb-20 z-10">
+    <!-- Categories will be injected here -->
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-8 text-center text-slate-600 text-sm relative z-10">
+    <p>Open Source Physics Simulations for Education. Created with 🩵 by Hong Kong Physics Teachers.</p>
+  </footer>
+
+  <script>
+    // --- Configuration ---
+    const DATA_URL = 'data/simulations.json';
+
+    // Category Order (as requested)
+    const CATEGORY_ORDER = [
+      "Heat and Gases",
+      "Force and Motion",
+      "Optics and Wave Motion",
+      "Electricity and Magnetism",
+      "Nuclear Physics",
+      "Biology"
+    ];
+
+    // i18n Configuration
+    const i18n = {
+      'en-US': {
+        siteTitle: "Physics Sim",
+        siteTagline: "Interactive simulations for exploring the physical world.",
+        searchPlaceholder: "Search simulations...",
+        categories: {
+          "Heat and Gases": "Heat and Gases",
+          "Force and Motion": "Force and Motion",
+          "Optics and Wave Motion": "Optics and Wave Motion",
+          "Electricity and Magnetism": "Electricity and Magnetism",
+          "Nuclear Physics": "Nuclear Physics",
+          "Biology": "Biology"
+        },
+        contributors: "Contributors"
+      },
+      'zh-HK': {
+        siteTitle: "物理模擬實驗室",
+        siteTagline: "探索物理世界的互動模擬體驗。",
+        searchPlaceholder: "搜尋模擬實驗...",
+        categories: {
+          "Heat and Gases": "熱與氣體",
+          "Force and Motion": "力與運動",
+          "Optics and Wave Motion": "光學與波動",
+          "Electricity and Magnetism": "電與磁",
+          "Nuclear Physics": "核物理",
+          "Biology": "生物"
+        },
+        contributors: "貢獻者"
+      }
+    };
+
+    // State
+    let simulationsData = [];
+    let currentLang = 'en-US';
+
+    // --- Initialization ---
+    async function init() {
+      // 1. Load Language from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const langParam = urlParams.get('lang');
+      if (langParam && i18n[langParam]) {
+        currentLang = langParam;
+      }
+
+      updateLanguageUI();
+
+      // 2. Fetch Data
+      try {
+        const response = await fetch(`${DATA_URL}?t=${Date.now()}`);
+        simulationsData = await response.json();
+        renderSimulations();
+      } catch (error) {
+        console.error("Failed to load simulations:", error);
+        document.getElementById('simulation-container').innerHTML =
+          `<div class="text-center text-red-400 mt-10">Failed to load simulation data. Please try again later.</div>`;
+      }
+
+      // 3. Setup Search
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        renderSimulations(e.target.value);
+      });
+
+      // 4. Start Particles
+      initParticles();
+    }
+
+    // --- Rendering ---
+    function renderSimulations(filterText = '') {
+      const container = document.getElementById('simulation-container');
+      container.innerHTML = '';
+
+      const filterLower = filterText.toLowerCase();
+
+      // Group by Category
+      const grouped = {};
+
+      // Initialize groups based on order to maintain sort
+      CATEGORY_ORDER.forEach(cat => grouped[cat] = []);
+
+      // Sort data into groups
+      simulationsData.forEach(sim => {
+        // Get localized title/desc for filtering
+        const title = sim.title[currentLang] || sim.title['en-US'];
+        const desc = sim.description[currentLang] || sim.description['en-US'];
+
+        // Filter
+        if (filterText && !title.toLowerCase().includes(filterLower) && !desc.toLowerCase().includes(filterLower)) {
+          return;
+        }
+
+        // Determine Category (English key)
+        const catKey = sim.category['en-US'];
+        if (!grouped[catKey]) {
+          grouped[catKey] = []; // Handle unknown categories gracefully
+        }
+        grouped[catKey].push(sim);
+      });
+
+      // Render Groups
+      let hasContent = false;
+      for (const [category, sims] of Object.entries(grouped)) {
+        if (sims.length === 0) continue;
+        hasContent = true;
+
+        // Section Container
+        const section = document.createElement('section');
+        section.className = "mb-16 fade-in-section";
+
+        // Section Title
+        const catTitle = i18n[currentLang].categories[category] || category;
+        const h2 = document.createElement('h2');
+        h2.className = "text-2xl font-bold mb-6 text-blue-300 border-b border-slate-800 pb-2 inline-block pr-8";
+        h2.textContent = catTitle;
+        section.appendChild(h2);
+
+        // Grid
+        const grid = document.createElement('div');
+        grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+
+        sims.forEach(sim => {
+          const card = createCard(sim);
+          grid.appendChild(card);
+        });
+
+        section.appendChild(grid);
+        container.appendChild(section);
+      }
+
+      if (!hasContent) {
+        container.innerHTML = `<div class="text-center text-slate-500 mt-10">No simulations found matching "${filterText}"</div>`;
+      }
+
+      // Re-trigger lazy load observer
+      setupIntersectionObserver();
+    }
+
+    function createCard(sim) {
+      const title = sim.title[currentLang] || sim.title['en-US'];
+      const desc = sim.description[currentLang] || sim.description['en-US'];
+      const contributorsLabel = i18n[currentLang].contributors;
+
+      // Construct URL with lang param
+      const simUrl = new URL(sim.simulationUrl, window.location.href);
+      simUrl.searchParams.set('lang', currentLang);
+
+      const card = document.createElement('a');
+      card.href = simUrl.toString();
+      card.className = "sim-card block bg-slate-800 rounded-xl overflow-hidden border border-slate-700 group relative";
+
+      card.innerHTML = `
+                <div class="aspect-video bg-slate-900 relative overflow-hidden">
+                    <img src="${sim.screenshotUrl}" alt="${title}" loading="lazy" 
+                        class="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-60"></div>
+                </div>
+                <div class="p-5">
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">${title}</h3>
+                    <p class="text-slate-400 text-sm mb-4 line-clamp-2">${desc}</p>
+                    <div class="flex items-center justify-between mt-auto">
+                        <span class="text-xs text-slate-500 font-mono">${contributorsLabel}: ${sim.contributors[0]}</span>
+                        <span class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </span>
+                    </div>
+                </div>
+            `;
+      return card;
+    }
+
+    // --- Language Handling ---
+    function setLanguage(lang) {
+      if (currentLang === lang) return;
+      currentLang = lang;
+
+      // Update URL
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.set('lang', lang);
+      window.history.pushState({}, '', newUrl);
+
+      updateLanguageUI();
+      renderSimulations(document.getElementById('searchInput').value);
+    }
+
+    function updateLanguageUI() {
+      // Update Buttons
+      const btnEn = document.getElementById('btn-en');
+      const btnZh = document.getElementById('btn-zh');
+
+      if (currentLang === 'en-US') {
+        btnEn.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md";
+        btnZh.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700";
+      } else {
+        btnZh.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md";
+        btnEn.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700";
+      }
+
+      // Update Static Text
+      document.querySelector('[data-i18n="siteTitle"]').textContent = i18n[currentLang].siteTitle;
+      document.querySelector('[data-i18n="siteTagline"]').textContent = i18n[currentLang].siteTagline;
+      document.getElementById('searchInput').placeholder = i18n[currentLang].searchPlaceholder;
+      document.title = i18n[currentLang].siteTitle;
+    }
+
+    // --- Lazy Load Animation ---
+    function setupIntersectionObserver() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target); // Only animate once
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in-section').forEach(el => {
+        observer.observe(el);
+      });
+    }
+
+    // --- Particles Background ---
+    function initParticles() {
+      const canvas = document.getElementById('particles');
+      const ctx = canvas.getContext('2d');
+      let width, height;
+      let particles = [];
+
+      function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      }
+
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.vx = (Math.random() - 0.5) * 0.5;
+          this.vy = (Math.random() - 0.5) * 0.5;
+          this.size = Math.random() * 2;
+          this.alpha = Math.random() * 0.5;
+        }
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          if (this.x < 0) this.x = width;
+          if (this.x > width) this.x = 0;
+          if (this.y < 0) this.y = height;
+          if (this.y > height) this.y = 0;
+        }
+        draw() {
+          ctx.fillStyle = `rgba(100, 116, 139, ${this.alpha})`; // Slate-500
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function init() {
+        resize();
+        particles = [];
+        for (let i = 0; i < 50; i++) particles.push(new Particle());
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        particles.forEach(p => {
+          p.update();
+          p.draw();
+        });
+        requestAnimationFrame(animate);
+      }
+
+      window.addEventListener('resize', resize);
+      init();
+      animate();
+    }
+
+    // Run
+    init();
+
+  </script>
 </body>
 
 </html>

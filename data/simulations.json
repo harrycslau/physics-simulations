@@ -1,0 +1,162 @@
+[
+    {
+        "id": "micro-ecosystem",
+        "category": {
+            "en-US": "Biology",
+            "zh-HK": "生物"
+        },
+        "title": {
+            "en-US": "Micro Ecosystem",
+            "zh-HK": "微生態系統"
+        },
+        "description": {
+            "en-US": "A simulation of a small ecosystem with producers, consumers, and decomposers.",
+            "zh-HK": "模擬包含生產者、消費者和分解者的微型生態系統。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/biology/micro-ecosystem.html",
+        "screenshotUrl": "screenshots/micro-ecosystem.png"
+    },
+    {
+        "id": "osmosis",
+        "category": {
+            "en-US": "Biology",
+            "zh-HK": "生物"
+        },
+        "title": {
+            "en-US": "Osmosis",
+            "zh-HK": "滲透作用"
+        },
+        "description": {
+            "en-US": "Visualize the movement of water molecules across a semi-permeable membrane.",
+            "zh-HK": "可視化水分子穿過半透膜的運動過程。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/biology/osmosis.html",
+        "screenshotUrl": "screenshots/osmosis.png"
+    },
+    {
+        "id": "air-conditioner",
+        "category": {
+            "en-US": "Heat and Gases",
+            "zh-HK": "熱與氣體"
+        },
+        "title": {
+            "en-US": "Window Air Conditioner Cycle",
+            "zh-HK": "窗口式冷氣機運作原理"
+        },
+        "description": {
+            "en-US": "Physics Simulation: Vapor Compression Cycle.",
+            "zh-HK": "物理模擬：蒸氣壓縮循環。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/heat-and-gases/air-conditioner.html",
+        "screenshotUrl": "screenshots/air-conditioner.png"
+    },
+    {
+        "id": "convection",
+        "category": {
+            "en-US": "Heat and Gases",
+            "zh-HK": "熱與氣體"
+        },
+        "title": {
+            "en-US": "Convection in a Kettle",
+            "zh-HK": "水煲中的熱對流模擬"
+        },
+        "description": {
+            "en-US": "Observe the cycle of rising hot water and sinking cold water after central heating.",
+            "zh-HK": "觀察中央加熱後，熱水上升與冷水下降形成的循環路徑。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/heat-and-gases/convection.html",
+        "screenshotUrl": "screenshots/convection.png"
+    },
+    {
+        "id": "specific-heat-capacity",
+        "category": {
+            "en-US": "Heat and Gases",
+            "zh-HK": "熱與氣體"
+        },
+        "title": {
+            "en-US": "Specific Heat Capacity",
+            "zh-HK": "比熱容量"
+        },
+        "description": {
+            "en-US": "Explore the concept of specific heat capacity with different materials.",
+            "zh-HK": "探索不同材料的比熱容量概念。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/heat-and-gases/specific-heat-capacity.html",
+        "screenshotUrl": "screenshots/specific-heat-capacity.png"
+    },
+    {
+        "id": "diffraction-grating",
+        "category": {
+            "en-US": "Optics and Wave Motion",
+            "zh-HK": "光學與波動"
+        },
+        "title": {
+            "en-US": "Diffraction Grating",
+            "zh-HK": "衍射光柵"
+        },
+        "description": {
+            "en-US": "Simulate the interference pattern produced by a diffraction grating.",
+            "zh-HK": "模擬衍射光柵產生的干涉圖樣。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/optics-and-wave-motion/diffraction-grating.html",
+        "screenshotUrl": "screenshots/diffraction-grating.png"
+    },
+    {
+        "id": "reflection-of-light",
+        "category": {
+            "en-US": "Optics and Wave Motion",
+            "zh-HK": "光學與波動"
+        },
+        "title": {
+            "en-US": "Reflection of Light",
+            "zh-HK": "光的反射"
+        },
+        "description": {
+            "en-US": "Demonstrate the laws of reflection with interactive light rays.",
+            "zh-HK": "通過互動光線演示反射定律。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/optics-and-wave-motion/reflection-of-light.html",
+        "screenshotUrl": "screenshots/reflection-of-light.png"
+    },
+    {
+        "id": "snells-law",
+        "category": {
+            "en-US": "Optics and Wave Motion",
+            "zh-HK": "光學與波動"
+        },
+        "title": {
+            "en-US": "Snell's Law",
+            "zh-HK": "斯涅爾定律"
+        },
+        "description": {
+            "en-US": "Visualize refraction as light passes between different media.",
+            "zh-HK": "可視化光線穿過不同介質時的折射現象。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/optics-and-wave-motion/snells-law.html",
+        "screenshotUrl": "screenshots/snells-law.png"
+    }
+]
