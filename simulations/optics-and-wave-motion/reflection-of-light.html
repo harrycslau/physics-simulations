@@ -1,22 +1,19 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en-US">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>光的反射模擬實驗室</title>
-    <!-- Tailwind CSS -->
+    <title data-i18n="title">Reflection of Light Virtual Lab</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             overscroll-behavior: none;
-            user-select: none; /* Prevent text selection while dragging */
+            user-select: none;
         }
         canvas {
-            touch-action: none; /* Important for custom drag handling */
+            touch-action: none;
         }
-        /* Custom slider styling */
         input[type=range] {
             -webkit-appearance: none; 
             background: transparent; 
@@ -39,78 +36,81 @@
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-200 font-sans h-screen flex flex-col overflow-hidden">
+<body class="bg-slate-900 text-slate-200 font-sans h-screen flex flex-col overflow-hidden relative">
 
-    <!-- Header -->
+    <div class="absolute top-4 right-4 flex gap-2 z-30">
+        <button type="button" data-lang-switch="en-US" class="px-3 py-1 text-xs font-semibold border border-slate-600 rounded-full bg-white/70 text-slate-700 hover:bg-white hover:text-slate-900 transition" data-i18n="languageButtonEnglish">EN</button>
+        <button type="button" data-lang-switch="zh-HK" class="px-3 py-1 text-xs font-semibold border border-slate-600 rounded-full bg-white/70 text-slate-700 hover:bg-white hover:text-slate-900 transition" data-i18n="languageButtonChinese">繁</button>
+    </div>
+
     <header class="bg-slate-800 border-b border-slate-700 p-4 shadow-md z-10 flex justify-between items-center shrink-0">
         <div class="flex items-center gap-3">
             <i class="fa-solid fa-lightbulb text-yellow-400 text-xl"></i>
-            <h1 class="text-xl font-bold tracking-wide text-white">物理實驗室：光的反射</h1>
+            <h1 class="text-xl font-bold tracking-wide text-white" data-i18n="headerTitle">Physics Lab: Reflection of Light</h1>
         </div>
-        <button onclick="resetSimulation()" class="bg-slate-700 hover:bg-slate-600 text-xs sm:text-sm px-3 py-1.5 rounded transition flex items-center gap-2">
-            <i class="fa-solid fa-rotate-right"></i> 重置
+        <button id="reset-button" class="bg-slate-700 hover:bg-slate-600 text-xs sm:text-sm px-3 py-1.5 rounded transition flex items-center gap-2">
+            <i class="fa-solid fa-rotate-right"></i> <span data-i18n="resetButton">Reset</span>
         </button>
     </header>
 
-    <!-- Main Content -->
     <main class="flex-1 flex flex-col md:flex-row relative overflow-hidden">
-        
-        <!-- Canvas Area -->
         <div class="relative flex-1 bg-slate-950 overflow-hidden" id="canvas-container">
-            <!-- Interactive Layer -->
             <canvas id="simCanvas" class="block w-full h-full cursor-crosshair"></canvas>
-            
-            <!-- Floating Helper Text -->
             <div class="absolute top-4 left-4 bg-slate-800/80 backdrop-blur p-3 rounded-lg border border-slate-700 text-sm pointer-events-none select-none shadow-lg">
-                <p class="text-gray-400 mb-1"><i class="fa-solid fa-hand-pointer mr-1"></i> 操作說明：</p>
-                <ul class="list-disc list-inside text-slate-300 space-y-1">
-                    <li>拖曳 <span class="text-yellow-400 font-bold">黃色圓點</span> 移動光源</li>
-                    <li>拖曳 <span class="text-blue-400 font-bold">藍色長條</span> 移動平面鏡</li>
+                <p class="text-gray-400 mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-hand-pointer"></i>
+                    <span data-i18n="instructionIntro">Interaction tips:</span>
+                </p>
+                <ul class="list-disc list-inside text-slate-300 space-y-1 pl-2">
+                    <li class="space-x-1">
+                        <span data-i18n="instructionStep1Prefix">Drag</span>
+                        <span class="text-yellow-400 font-bold" data-i18n="instructionStep1Highlight">the yellow dot</span>
+                        <span data-i18n="instructionStep1Suffix">to reposition the light source.</span>
+                    </li>
+                    <li class="space-x-1">
+                        <span data-i18n="instructionStep2Prefix">Drag</span>
+                        <span class="text-blue-400 font-bold" data-i18n="instructionStep2Highlight">the blue bar</span>
+                        <span data-i18n="instructionStep2Suffix">to move the plane mirror.</span>
+                    </li>
                 </ul>
             </div>
         </div>
 
-        <!-- Controls Sidebar -->
         <aside class="w-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-l border-slate-700 flex flex-col shrink-0 z-20 shadow-2xl">
             <div class="p-5 space-y-6 overflow-y-auto">
-                
-                <!-- Data Display -->
                 <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 border-b border-slate-700 pb-2">即時數據</h2>
+                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 border-b border-slate-700 pb-2" data-i18n="dataHeading">Live Data</h2>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="text-center">
-                            <div class="text-xs text-slate-400 mb-1">入射角 ($\theta_i$)</div>
+                            <div class="text-xs text-slate-400 mb-1" data-i18n="incidenceLabel">Angle of incidence (θᵢ)</div>
                             <div class="text-2xl font-mono font-bold text-emerald-400" id="angle-incidence">0°</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-xs text-slate-400 mb-1">反射角 ($\theta_r$)</div>
+                            <div class="text-xs text-slate-400 mb-1" data-i18n="reflectionLabel">Angle of reflection (θᵣ)</div>
                             <div class="text-2xl font-mono font-bold text-blue-400" id="angle-reflection">0°</div>
                         </div>
                     </div>
-                    <div class="mt-3 text-center text-xs text-slate-500 italic">
-                        驗證：入射角 = 反射角
+                    <div class="mt-3 text-center text-xs text-slate-500 italic" data-i18n="validationText">
+                        Verification: angle of incidence = angle of reflection
                     </div>
                 </div>
 
-                <!-- Mirror Controls -->
                 <div class="space-y-4">
-                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider">平面鏡控制</h2>
-                    
+                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider" data-i18n="mirrorControlsHeading">Mirror Controls</h2>
                     <div>
                         <div class="flex justify-between text-sm mb-2">
-                            <span>旋轉角度</span>
+                            <span data-i18n="rotationLabel">Rotation angle</span>
                             <span id="mirror-angle-val" class="font-mono text-blue-300">0°</span>
                         </div>
                         <input type="range" id="mirror-angle" min="0" max="360" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
                     </div>
                 </div>
 
-                <!-- Toggles -->
                 <div class="space-y-3">
-                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider">顯示選項</h2>
+                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider" data-i18n="displayHeading">Display Options</h2>
                     
                     <label class="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-800 rounded transition">
-                        <span class="text-slate-300 text-sm">顯示法線 (Normal)</span>
+                        <span class="text-slate-300 text-sm" data-i18n="toggleNormal">Show normal</span>
                         <div class="relative">
                             <input type="checkbox" id="show-normal" class="sr-only peer" checked>
                             <div class="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
@@ -118,7 +118,7 @@
                     </label>
 
                     <label class="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-800 rounded transition">
-                        <span class="text-slate-300 text-sm">顯示角度數值</span>
+                        <span class="text-slate-300 text-sm" data-i18n="toggleAngles">Show angle labels</span>
                         <div class="relative">
                             <input type="checkbox" id="show-angles" class="sr-only peer" checked>
                             <div class="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
@@ -126,7 +126,7 @@
                     </label>
                     
                     <label class="flex items-center justify-between cursor-pointer p-2 hover:bg-slate-800 rounded transition">
-                        <span class="text-slate-300 text-sm">無限光束延伸</span>
+                        <span class="text-slate-300 text-sm" data-i18n="toggleInfinite">Extend reflected ray</span>
                         <div class="relative">
                             <input type="checkbox" id="infinite-ray" class="sr-only peer">
                             <div class="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
@@ -139,14 +139,64 @@
     </main>
 
     <script>
-        /**
-         * 物理模擬邏輯
-         */
+        const translations = {
+            "en-US": {
+                title: "Reflection of Light Virtual Lab",
+                languageButtonEnglish: "EN",
+                languageButtonChinese: "繁",
+                headerTitle: "Physics Lab: Reflection of Light",
+                resetButton: "Reset",
+                instructionIntro: "Interaction tips:",
+                instructionStep1Prefix: "Drag",
+                instructionStep1Highlight: "the yellow dot",
+                instructionStep1Suffix: "to reposition the light source.",
+                instructionStep2Prefix: "Drag",
+                instructionStep2Highlight: "the blue bar",
+                instructionStep2Suffix: "to move the plane mirror.",
+                dataHeading: "Live Data",
+                incidenceLabel: "Angle of incidence (θᵢ)",
+                reflectionLabel: "Angle of reflection (θᵣ)",
+                validationText: "Verification: angle of incidence = angle of reflection",
+                mirrorControlsHeading: "Mirror Controls",
+                rotationLabel: "Rotation angle",
+                displayHeading: "Display Options",
+                toggleNormal: "Show normal",
+                toggleAngles: "Show angle labels",
+                toggleInfinite: "Extend reflected ray",
+                lightSourceLabel: "Light Source"
+            },
+            "zh-HK": {
+                title: "光的反射模擬實驗室",
+                languageButtonEnglish: "EN",
+                languageButtonChinese: "繁",
+                headerTitle: "物理實驗室：光的反射",
+                resetButton: "重置",
+                instructionIntro: "操作說明：",
+                instructionStep1Prefix: "拖曳",
+                instructionStep1Highlight: "黃色圓點",
+                instructionStep1Suffix: "以移動光源。",
+                instructionStep2Prefix: "拖曳",
+                instructionStep2Highlight: "藍色長條",
+                instructionStep2Suffix: "以移動平面鏡。",
+                dataHeading: "即時數據",
+                incidenceLabel: "入射角 (θᵢ)",
+                reflectionLabel: "反射角 (θᵣ)",
+                validationText: "驗證：入射角 = 反射角",
+                mirrorControlsHeading: "平面鏡控制",
+                rotationLabel: "旋轉角度",
+                displayHeading: "顯示選項",
+                toggleNormal: "顯示法線",
+                toggleAngles: "顯示角度數值",
+                toggleInfinite: "無限延伸光束",
+                lightSourceLabel: "光源"
+            }
+        };
+
+        let currentLang = "en-US";
+
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
         const container = document.getElementById('canvas-container');
-
-        // DOM Elements
         const ui = {
             incidenceAngle: document.getElementById('angle-incidence'),
             reflectionAngle: document.getElementById('angle-reflection'),
@@ -156,53 +206,100 @@
             showAngles: document.getElementById('show-angles'),
             infiniteRay: document.getElementById('infinite-ray')
         };
+        const resetBtn = document.getElementById('reset-button');
 
-        // State
+        function getTranslation(key) {
+            const dict = translations[currentLang] || translations["en-US"];
+            return dict[key] ?? "";
+        }
+
+        function applyTranslations() {
+            const dict = translations[currentLang] || translations["en-US"];
+            document.documentElement.lang = currentLang;
+            document.title = dict.title || document.title;
+            document.querySelectorAll("[data-i18n]").forEach((el) => {
+                const key = el.dataset.i18n;
+                if (!key) return;
+                const text = dict[key];
+                if (typeof text !== "undefined") {
+                    el.textContent = text;
+                }
+            });
+            updateLangButtons();
+        }
+
+        function updateLangButtons() {
+            document.querySelectorAll("[data-lang-switch]").forEach((btn) => {
+                const isActive = btn.dataset.langSwitch === currentLang;
+                btn.classList.toggle("text-slate-900", isActive);
+                btn.classList.toggle("text-slate-700", !isActive);
+                btn.classList.toggle("shadow-lg", isActive);
+                btn.classList.toggle("bg-white", isActive);
+                btn.classList.toggle("bg-white/70", !isActive);
+                btn.classList.toggle("ring-1", isActive);
+                btn.classList.toggle("ring-blue-400", isActive);
+            });
+        }
+
+        function setLanguage(lang, skipUrlUpdate = false) {
+            if (!translations[lang]) lang = "en-US";
+            currentLang = lang;
+            applyTranslations();
+            if (!skipUrlUpdate) {
+                const url = new URL(window.location);
+                url.searchParams.set("lang", lang);
+                window.history.pushState({}, "", url);
+            }
+        }
+
+        function setupLanguageSwitcher() {
+            document.querySelectorAll("[data-lang-switch]").forEach((btn) => {
+                btn.addEventListener("click", () => setLanguage(btn.dataset.langSwitch));
+            });
+        }
+
+        function initLanguage() {
+            setupLanguageSwitcher();
+            const params = new URLSearchParams(window.location.search);
+            const langParam = params.get("lang");
+            const initialLang = translations[langParam] ? langParam : "en-US";
+            setLanguage(initialLang, true);
+        }
+
         let state = {
             lightSource: { x: 100, y: 100, radius: 15, isDragging: false },
-            mirror: { x: 0, y: 0, length: 200, angleDeg: 0, width: 10, isDragging: false }, // x,y is center
-            rayTarget: { x: 0, y: 0 }, // Where the light is aiming (fixed to mirror center for this demo mode mostly, but calculated dynamically)
-            intersection: null
+            mirror: { x: 0, y: 0, length: 200, angleDeg: 0, width: 10, isDragging: false },
+            rayTarget: { x: 0, y: 0 },
+            intersection: null,
+            calc: null
         };
 
-        // Init
         function init() {
             resizeCanvas();
             resetSimulation();
             requestAnimationFrame(loop);
-
-            // Event Listeners
             window.addEventListener('resize', resizeCanvas);
-            
-            // Mouse
             canvas.addEventListener('mousedown', handleInputStart);
             window.addEventListener('mousemove', handleInputMove);
             window.addEventListener('mouseup', handleInputEnd);
-
-            // Touch
             canvas.addEventListener('touchstart', handleInputStart, {passive: false});
             window.addEventListener('touchmove', handleInputMove, {passive: false});
             window.addEventListener('touchend', handleInputEnd);
-
-            // UI Controls
             ui.mirrorAngleSlider.addEventListener('input', (e) => {
-                state.mirror.angleDeg = parseInt(e.target.value);
+                state.mirror.angleDeg = parseInt(e.target.value, 10);
                 ui.mirrorAngleVal.textContent = state.mirror.angleDeg + '°';
             });
+            resetBtn.addEventListener('click', resetSimulation);
         }
 
         function resetSimulation() {
             const cx = canvas.width / 2;
             const cy = canvas.height / 2;
-            
             state.mirror.x = cx;
             state.mirror.y = cy + 100;
             state.mirror.angleDeg = 0;
-            
             state.lightSource.x = cx - 150;
             state.lightSource.y = cy - 150;
-
-            // Update UI
             ui.mirrorAngleSlider.value = 0;
             ui.mirrorAngleVal.textContent = "0°";
         }
@@ -212,7 +309,6 @@
             canvas.height = container.clientHeight;
         }
 
-        // Physics & Math Helpers
         const toRad = (deg) => deg * Math.PI / 180;
         const toDeg = (rad) => rad * 180 / Math.PI;
 
@@ -220,8 +316,6 @@
             return Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2);
         }
 
-        // Ray casting intersection
-        // Returns {x, y} or null
         function getIntersection(rayStart, rayDir, segStart, segEnd) {
             const x1 = segStart.x;
             const y1 = segStart.y;
@@ -249,7 +343,6 @@
         }
 
         function update() {
-            // 1. Calculate Mirror Endpoints
             const angleRad = toRad(state.mirror.angleDeg);
             const halfLen = state.mirror.length / 2;
             const dx = Math.cos(angleRad) * halfLen;
@@ -258,12 +351,6 @@
             const p1 = { x: state.mirror.x - dx, y: state.mirror.y - dy };
             const p2 = { x: state.mirror.x + dx, y: state.mirror.y + dy };
 
-            // 2. Ray Direction (Aiming at Mirror Center for simpler UX, or just projection)
-            // To make it feel like a laser pointer, let's just say it always aims at the mirror center 
-            // UNLESS we are dragging the light source, but effectively, "aiming at center" is best for education demo.
-            // However, true reflection allows the ray to hit anywhere.
-            // Let's aim at the mirror's center point (state.mirror.x, state.mirror.y)
-            
             const dirVector = {
                 x: state.mirror.x - state.lightSource.x,
                 y: state.mirror.y - state.lightSource.y
@@ -271,41 +358,27 @@
             const len = Math.sqrt(dirVector.x**2 + dirVector.y**2);
             const normalizedDir = { x: dirVector.x / len, y: dirVector.y / len };
 
-            // 3. Check Intersection
-            // We cast a ray from LightSource in direction `normalizedDir`
-            // against line segment p1-p2
             state.intersection = getIntersection(state.lightSource, normalizedDir, p1, p2);
 
-            // 4. Calculate Angles
             if (state.intersection) {
-                // Mirror Normal vector: (-dy, dx) normalized
-                // Note: Need to check which side light comes from to flip normal if needed
                 let nx = -Math.sin(angleRad);
                 let ny = Math.cos(angleRad);
-
-                // Dot product of RayDir and Normal
                 const dot = normalizedDir.x * nx + normalizedDir.y * ny;
-                
-                // If dot > 0, normal is pointing away from light, flip it
                 if (dot > 0) {
                     nx = -nx;
                     ny = -ny;
                 }
 
-                // Incidence Angle: acos(-Ray . Normal)
                 const dotInc = -(normalizedDir.x * nx + normalizedDir.y * ny);
                 const incAngleRad = Math.acos(dotInc);
                 const incAngleDeg = toDeg(incAngleRad);
 
-                // Reflection Vector: R = D - 2(D . N)N
                 const reflectX = normalizedDir.x - 2 * (normalizedDir.x * nx + normalizedDir.y * ny) * nx;
                 const reflectY = normalizedDir.y - 2 * (normalizedDir.x * nx + normalizedDir.y * ny) * ny;
 
-                // Update UI text
                 ui.incidenceAngle.textContent = incAngleDeg.toFixed(1) + "°";
-                ui.reflectionAngle.textContent = incAngleDeg.toFixed(1) + "°"; // Ideally same
+                ui.reflectionAngle.textContent = incAngleDeg.toFixed(1) + "°";
 
-                // Save calculated data to state for drawing
                 state.calc = {
                     p1, p2,
                     normal: { x: nx, y: ny },
@@ -313,7 +386,6 @@
                     incAngleDeg
                 };
             } else {
-                // No hit
                 state.calc = { p1, p2, normal: null };
                 ui.incidenceAngle.textContent = "--";
                 ui.reflectionAngle.textContent = "--";
@@ -321,31 +393,24 @@
         }
 
         function draw() {
-            // Clear
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Grid background (subtle)
             drawGrid();
 
             const { p1, p2, normal, reflectDir, incAngleDeg } = state.calc || {};
 
-            // 1. Draw Mirror
             ctx.shadowBlur = 10;
             ctx.shadowColor = 'rgba(59, 130, 246, 0.5)';
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = '#3b82f6'; // Blue-500
+            ctx.strokeStyle = '#3b82f6';
             ctx.lineWidth = 6;
             ctx.lineCap = 'round';
             ctx.stroke();
             
-            // Mirror Back pattern (hatching)
             drawMirrorHatching(p1, p2);
             ctx.shadowBlur = 0;
 
-            // 2. Draw Light Source
-            // Glow
             const grad = ctx.createRadialGradient(state.lightSource.x, state.lightSource.y, 5, state.lightSource.x, state.lightSource.y, 30);
             grad.addColorStop(0, 'rgba(250, 204, 21, 0.8)');
             grad.addColorStop(1, 'rgba(250, 204, 21, 0)');
@@ -354,8 +419,7 @@
             ctx.arc(state.lightSource.x, state.lightSource.y, 30, 0, Math.PI * 2);
             ctx.fill();
 
-            // Source Body
-            ctx.fillStyle = '#fbbf24'; // Amber-400
+            ctx.fillStyle = '#fbbf24';
             ctx.beginPath();
             ctx.arc(state.lightSource.x, state.lightSource.y, 10, 0, Math.PI * 2);
             ctx.fill();
@@ -363,43 +427,35 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Label "光源"
             ctx.fillStyle = '#cbd5e1';
             ctx.font = '12px sans-serif';
-            ctx.fillText('光源', state.lightSource.x - 12, state.lightSource.y - 20);
+            ctx.fillText(getTranslation('lightSourceLabel'), state.lightSource.x - 16, state.lightSource.y - 20);
 
-
-            // 3. Draw Rays
             if (state.intersection) {
                 const hit = state.intersection;
 
-                // Incident Ray
                 ctx.beginPath();
                 ctx.moveTo(state.lightSource.x, state.lightSource.y);
                 ctx.lineTo(hit.x, hit.y);
-                ctx.strokeStyle = '#facc15'; // Yellow-400
+                ctx.strokeStyle = '#facc15';
                 ctx.lineWidth = 3;
                 ctx.stroke();
                 drawArrow(state.lightSource, hit, '#facc15');
 
-                // Normal Line
                 if (ui.showNormal.checked && normal) {
                     const normalLen = 80;
                     ctx.beginPath();
                     ctx.moveTo(hit.x, hit.y);
                     ctx.lineTo(hit.x + normal.x * normalLen, hit.y + normal.y * normalLen);
-                    ctx.strokeStyle = '#94a3b8'; // Slate-400
+                    ctx.strokeStyle = '#94a3b8';
                     ctx.lineWidth = 1;
                     ctx.setLineDash([5, 5]);
                     ctx.stroke();
                     ctx.setLineDash([]);
-                    
-                    // Label "N"
                     ctx.fillStyle = '#94a3b8';
                     ctx.fillText('N', hit.x + normal.x * (normalLen+10), hit.y + normal.y * (normalLen+10));
                 }
 
-                // Reflected Ray
                 const rayLen = ui.infiniteRay.checked ? 2000 : 300;
                 const refEnd = {
                     x: hit.x + reflectDir.x * rayLen,
@@ -409,35 +465,23 @@
                 ctx.beginPath();
                 ctx.moveTo(hit.x, hit.y);
                 ctx.lineTo(refEnd.x, refEnd.y);
-                ctx.strokeStyle = '#facc15';
-                ctx.lineWidth = 3; // Fades out
-                
-                // Create gradient for fading ray
                 const rayGrad = ctx.createLinearGradient(hit.x, hit.y, refEnd.x, refEnd.y);
                 rayGrad.addColorStop(0, 'rgba(250, 204, 21, 1)');
                 rayGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
                 ctx.strokeStyle = rayGrad;
-                
+                ctx.lineWidth = 3;
                 ctx.stroke();
                 drawArrow(hit, {x: hit.x + reflectDir.x * 100, y: hit.y + reflectDir.y * 100}, '#facc15');
 
-                // Angles
                 if (ui.showAngles.checked) {
-                    drawAngleArc(hit, state.lightSource, normal, '#10b981', incAngleDeg.toFixed(1) + '°', -1); // Incident (Green)
-                    drawAngleArc(hit, refEnd, normal, '#3b82f6', incAngleDeg.toFixed(1) + '°', 1); // Reflected (Blue)
+                    drawAngleArc(hit, state.lightSource, normal, '#10b981', incAngleDeg.toFixed(1) + '°', -1);
+                    drawAngleArc(hit, refEnd, normal, '#3b82f6', incAngleDeg.toFixed(1) + '°', 1);
                 }
             } else {
-                // Ray misses mirror - draw infinite line from source
-                // Aiming at mirror center anyway
-                const dirVector = {
-                    x: state.mirror.x - state.lightSource.x,
-                    y: state.mirror.y - state.lightSource.y
-                };
-                // Just draw a line passing through mirror center coordinates but not stopping
                 ctx.beginPath();
                 ctx.moveTo(state.lightSource.x, state.lightSource.y);
                 ctx.lineTo(state.mirror.x, state.mirror.y);
-                ctx.strokeStyle = 'rgba(250, 204, 21, 0.3)'; // Dim yellow
+                ctx.strokeStyle = 'rgba(250, 204, 21, 0.3)';
                 ctx.lineWidth = 2;
                 ctx.setLineDash([5, 5]);
                 ctx.stroke();
@@ -446,26 +490,17 @@
         }
 
         function drawMirrorHatching(p1, p2) {
-            // Draw little diagonal lines on the "back" of the mirror
             const numHatches = 20;
             const dx = p2.x - p1.x;
             const dy = p2.y - p1.y;
-            
-            // Vector along mirror
             const len = Math.sqrt(dx*dx + dy*dy);
             const ux = dx/len;
             const uy = dy/len;
 
-            // Perpendicular vector (arbitrary side, usually 'down' relative to line)
-            // We need to check against light source? No, just pick a convention based on current angle.
-            // Let's just assume the "back" is opposite to the light for now, or static.
-            // For a simple sim, let's just push them 'down' relative to the rotation.
             let nx = -uy * 10;
             let ny = ux * 10;
 
-            // Determine "back" relative to light source if we have a hit
             if (state.calc && state.calc.normal) {
-                 // The normal points TOWARDS light. The hatch should go opposite.
                  nx = -state.calc.normal.x * 10;
                  ny = -state.calc.normal.y * 10;
             }
@@ -476,7 +511,7 @@
                 const mx = p1.x + dx * t;
                 const my = p1.y + dy * t;
                 ctx.moveTo(mx, my);
-                ctx.lineTo(mx + nx + ux * 5, my + ny + uy * 5); // Slanted hatch
+                ctx.lineTo(mx + nx + ux * 5, my + ny + uy * 5);
             }
             ctx.strokeStyle = '#475569';
             ctx.lineWidth = 1;
@@ -487,7 +522,6 @@
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
             ctx.lineWidth = 1;
             const step = 50;
-            
             ctx.beginPath();
             for(let x=0; x<canvas.width; x+=step) {
                 ctx.moveTo(x, 0);
@@ -505,10 +539,7 @@
             const dx = to.x - from.x;
             const dy = to.y - from.y;
             const angle = Math.atan2(dy, dx);
-            
-            // 修正：使用正確的線性插值公式計算光線上的點
-            // P = P_start + (P_end - P_start) * t
-            const t = 0.6; // 箭頭位置在線段的 60% 處
+            const t = 0.6;
             const midX = from.x + dx * t; 
             const midY = from.y + dy * t;
 
@@ -519,57 +550,33 @@
             ctx.lineTo(midX - headlen * Math.cos(angle + Math.PI / 6), midY - headlen * Math.sin(angle + Math.PI / 6));
             ctx.strokeStyle = color;
             ctx.lineWidth = 3;
-            ctx.lineCap = 'round'; // 讓箭頭轉角更圓滑
+            ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.stroke();
         }
 
         function drawAngleArc(center, pointOnRay, normalVec, color, text, side) {
-            // Calculate angle of normal
             const normAngle = Math.atan2(normalVec.y, normalVec.x);
-            
-            // Calculate angle of ray
             const rayAngle = Math.atan2(pointOnRay.y - center.y, pointOnRay.x - center.x);
-            
             const radius = 40;
-
             ctx.beginPath();
-            // Draw arc from normal to ray
-            // We need to handle the wrap-around logic or use simpler way
-            // Check which way is shorter
-            
-            ctx.arc(center.x, center.y, radius, normAngle, rayAngle, (side < 0 ? true : false)); // Approximate direction logic
-            
-            // Actually, simpler logic: compute start and end
-            // This visual arc is tricky to get perfectly right with just start/end without knowing CW/CCW
-            // Let's just draw a line to a point
-            
+            ctx.arc(center.x, center.y, radius, normAngle, rayAngle, side < 0);
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
             ctx.stroke();
-
-            // Text
-            const midAngle = (normAngle + rayAngle) / 2; 
-            // Fix wrap around for text pos
-            // ... simplified positioning
-            
-            const txtX = center.x + Math.cos(rayAngle) * (radius + 15); // Position near ray
+            const txtX = center.x + Math.cos(rayAngle) * (radius + 15);
             const txtY = center.y + Math.sin(rayAngle) * (radius + 15);
-            
             ctx.fillStyle = color;
             ctx.font = 'bold 12px monospace';
             ctx.fillText(text, txtX, txtY);
         }
 
-
-        // Interaction Loop
         function loop() {
             update();
             draw();
             requestAnimationFrame(loop);
         }
 
-        // Input Handling
         function getPointerPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -582,15 +589,11 @@
 
         function handleInputStart(e) {
             const pos = getPointerPos(e);
-            
-            // Check Light Source Hit
             if (distance(pos, state.lightSource) < 30) {
                 state.lightSource.isDragging = true;
                 e.preventDefault();
                 return;
             }
-
-            // Check Mirror Center Hit
             if (distance(pos, state.mirror) < 30) {
                 state.mirror.isDragging = true;
                 e.preventDefault();
@@ -600,13 +603,9 @@
 
         function handleInputMove(e) {
             if (!state.lightSource.isDragging && !state.mirror.isDragging) return;
-            
             const pos = getPointerPos(e);
-            
-            // Boundary checks
             pos.x = Math.max(10, Math.min(canvas.width - 10, pos.x));
             pos.y = Math.max(10, Math.min(canvas.height - 10, pos.y));
-
             if (state.lightSource.isDragging) {
                 state.lightSource.x = pos.x;
                 state.lightSource.y = pos.y;
@@ -616,14 +615,13 @@
             }
         }
 
-        function handleInputEnd(e) {
+        function handleInputEnd() {
             state.lightSource.isDragging = false;
             state.mirror.isDragging = false;
         }
 
-        // Start
+        initLanguage();
         init();
-
     </script>
 </body>
 </html>

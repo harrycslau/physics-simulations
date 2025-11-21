@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en-US">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斯涅耳定律 - 折射率實驗</title>
+    <title data-i18n="title">Snell's Law Refraction Lab</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            touch-action: manipulation; /* Improve touch handling on mobile */
+            touch-action: manipulation;
         }
         input[type=range] {
             -webkit-appearance: none; 
@@ -21,7 +21,6 @@
         input[type=range]:focus {
             outline: none;
         }
-        /* Custom slider styling for better visibility */
         .slider-thumb::-webkit-slider-thumb {
             height: 20px;
             width: 20px;
@@ -40,126 +39,115 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen relative">
 
-    <!-- Header -->
+    <div class="absolute top-4 right-4 flex gap-2 z-30">
+        <button type="button" data-lang-switch="en-US" class="px-3 py-1 text-xs font-semibold border border-indigo-200 rounded-full bg-white/80 text-indigo-700 hover:bg-white hover:text-indigo-900 transition" data-i18n="languageButtonEnglish">EN</button>
+        <button type="button" data-lang-switch="zh-HK" class="px-3 py-1 text-xs font-semibold border border-indigo-200 rounded-full bg-white/80 text-indigo-700 hover:bg-white hover:text-indigo-900 transition" data-i18n="languageButtonChinese">繁</button>
+    </div>
+
     <header class="bg-indigo-600 text-white p-4 shadow-lg">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-rainbow text-2xl"></i>
                 <div>
-                    <h1 class="text-xl font-bold">斯涅耳定律虛擬實驗室</h1>
-                    <p class="text-xs text-indigo-200">測定透明介質的折射率 (Snell's Law)</p>
+                    <h1 class="text-xl font-bold" data-i18n="headerTitle">Snell's Law Virtual Lab</h1>
+                    <p class="text-xs text-indigo-200" data-i18n="headerSubtitle">Measure refractive index using refraction angles (Snell's Law)</p>
                 </div>
             </div>
-            <button onclick="resetExperiment()" class="bg-indigo-500 hover:bg-indigo-400 px-3 py-1 rounded text-sm transition">
-                <i class="fa-solid fa-rotate-right mr-1"></i> 重置實驗
+            <button id="resetButton" class="bg-indigo-500 hover:bg-indigo-400 px-3 py-1 rounded text-sm transition flex items-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> <span data-i18n="resetButton">Reset Experiment</span>
             </button>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="flex-grow p-4 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- Left Column: Simulation & Controls -->
         <div class="space-y-6">
-            <!-- Canvas Container -->
             <div class="bg-white rounded-xl shadow-md p-1 overflow-hidden relative border border-gray-200">
                 <div class="absolute top-4 left-4 bg-white/90 backdrop-blur p-2 rounded shadow text-sm z-10">
                     <div class="flex items-center gap-2 text-red-600 font-bold">
                         <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
-                        入射角 (i): <span id="val-i">30.0</span>°
+                        <span data-i18n="incidentLabel">Angle of incidence (i):</span> <span id="val-i">30.0</span>°
                     </div>
                     <div class="flex items-center gap-2 text-blue-600 font-bold mt-1">
                         <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
-                        折射角 (r): <span id="val-r">0.0</span>°
+                        <span data-i18n="refractionLabel">Angle of refraction (r):</span> <span id="val-r">0.0</span>°
                     </div>
                 </div>
                 <canvas id="simCanvas" class="w-full h-auto bg-gray-50 block cursor-pointer" height="400" width="600"></canvas>
-                <p class="text-center text-xs text-gray-400 py-1">點擊或拖曳畫布可直接改變角度</p>
+                <p class="text-center text-xs text-gray-400 py-1" data-i18n="canvasHint">Tap or drag on the canvas to adjust the angle directly.</p>
             </div>
 
-            <!-- Controls -->
             <div class="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                 <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-sliders text-indigo-500"></i> 實驗參數控制
+                    <i class="fa-solid fa-sliders text-indigo-500"></i> <span data-i18n="controlsHeading">Parameter Controls</span>
                 </h2>
                 
                 <div class="space-y-6">
-                    <!-- Incident Angle Slider -->
                     <div>
                         <div class="flex justify-between mb-2">
-                            <label class="font-medium text-gray-700">入射角 ($i$)</label>
+                            <label class="font-medium text-gray-700" data-i18n="incidentSliderLabel">Angle of incidence (i)</label>
                             <span class="text-indigo-600 font-mono font-bold" id="display-angle">30°</span>
                         </div>
-                        <input type="range" id="angleSlider" min="0" max="85" step="0.5" value="30" 
-                            class="slider-thumb slider-track w-full appearance-none bg-transparent">
+                        <input type="range" id="angleSlider" min="0" max="85" step="0.5" value="30" class="slider-thumb slider-track w-full appearance-none bg-transparent">
                         <div class="flex justify-between text-xs text-gray-400 mt-1">
-                            <span>0° (法線)</span>
+                            <span data-i18n="incidentSliderMin">0° (Normal)</span>
                             <span>85°</span>
                         </div>
                     </div>
 
-                    <!-- Refractive Index Slider -->
                     <div>
                         <div class="flex justify-between mb-2">
-                            <label class="font-medium text-gray-700">透明介質折射率 ($n$)</label>
+                            <label class="font-medium text-gray-700" data-i18n="riSliderLabel">Refractive index of medium (n)</label>
                             <span class="text-indigo-600 font-mono font-bold" id="display-ri">1.50</span>
                         </div>
-                        <input type="range" id="nSlider" min="1.00" max="2.50" step="0.01" value="1.50" 
-                            class="slider-thumb slider-track w-full appearance-none bg-transparent">
+                        <input type="range" id="nSlider" min="1.00" max="2.50" step="0.01" value="1.50" class="slider-thumb slider-track w-full appearance-none bg-transparent">
                         <div class="flex justify-between text-xs text-gray-400 mt-1">
-                            <span>1.0 (空氣)</span>
-                            <span>1.5 (玻璃)</span>
-                            <span>2.4 (鑽石)</span>
+                            <span data-i18n="riHintAir">1.0 (Air)</span>
+                            <span data-i18n="riHintGlass">1.5 (Glass)</span>
+                            <span data-i18n="riHintDiamond">2.4 (Diamond)</span>
                         </div>
                     </div>
 
-                    <!-- Action Buttons -->
                     <div class="pt-2">
-                        <button onclick="recordData()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow transition flex items-center justify-center gap-2 active:scale-95">
-                            <i class="fa-solid fa-plus-circle"></i> 記錄數據點
+                        <button id="recordButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow transition flex items-center justify-center gap-2 active:scale-95">
+                            <i class="fa-solid fa-plus-circle"></i> <span data-i18n="recordButton">Record Data Point</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Analysis -->
         <div class="space-y-6">
-            
-            <!-- Graph Section -->
             <div class="bg-white rounded-xl shadow-md p-4 border border-gray-200">
                 <h2 class="text-lg font-semibold mb-2 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-line text-indigo-500"></i> $\sin(i)$ 對 $\sin(r)$ 關係圖
+                    <i class="fa-solid fa-chart-line text-indigo-500"></i> <span data-i18n="graphHeading">sin(i) vs sin(r) Relationship</span>
                 </h2>
                 <div class="relative w-full h-64 bg-white border border-gray-100 rounded">
                     <canvas id="graphCanvas" class="w-full h-full block"></canvas>
                 </div>
                 <div class="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div class="text-center sm:text-left">
-                        <p class="text-sm text-gray-600">最佳擬合直線斜率 (Slope)</p>
+                        <p class="text-sm text-gray-600" data-i18n="slopeLabel">Best-fit slope (m)</p>
                         <p class="text-2xl font-bold text-indigo-700" id="slopeValue">--</p>
                     </div>
                     <div class="text-center sm:text-right">
-                        <p class="text-sm text-gray-600">計算得出的折射率 ($n$)</p>
+                        <p class="text-sm text-gray-600" data-i18n="calcNLabel">Measured refractive index (n)</p>
                         <p class="text-2xl font-bold text-green-600" id="calcN">--</p>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-2 text-center">
-                    理論依據: $n_1 \sin(i) = n_2 \sin(r)$。設 $n_1=1$ (空氣)，則 $\sin(i) = n \sin(r)$。<br>
-                    斜率 $m = \frac{\Delta \sin(i)}{\Delta \sin(r)} \approx n$
+                <p class="text-xs text-gray-500 mt-2 text-center" data-i18n="graphExplanation">
+                    Theory: n₁ sin(i) = n₂ sin(r). Taking n₁ = 1 (air), the slope of sin(i) vs sin(r) approximates n.
                 </p>
             </div>
 
-            <!-- Data Table -->
             <div class="bg-white rounded-xl shadow-md p-6 border border-gray-200 overflow-hidden">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold flex items-center gap-2">
-                        <i class="fa-solid fa-table text-indigo-500"></i> 實驗數據表
+                        <i class="fa-solid fa-table text-indigo-500"></i> <span data-i18n="tableHeading">Recorded Data</span>
                     </h2>
-                    <button onclick="clearData()" class="text-sm text-red-500 hover:text-red-700 font-medium">
-                        <i class="fa-solid fa-trash"></i> 清除數據
+                    <button id="clearButton" class="text-sm text-red-500 hover:text-red-700 font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-trash"></i> <span data-i18n="clearButton">Clear Data</span>
                     </button>
                 </div>
                 <div class="overflow-x-auto">
@@ -167,17 +155,16 @@
                         <thead class="text-xs text-gray-700 uppercase bg-gray-100">
                             <tr>
                                 <th scope="col" class="px-4 py-3 rounded-tl-lg">#</th>
-                                <th scope="col" class="px-4 py-3">$i$ (°)</th>
-                                <th scope="col" class="px-4 py-3">$r$ (°)</th>
-                                <th scope="col" class="px-4 py-3 bg-blue-50 text-blue-700">$\sin(i)$ (y)</th>
-                                <th scope="col" class="px-4 py-3 bg-green-50 text-green-700 rounded-tr-lg">$\sin(r)$ (x)</th>
+                                <th scope="col" class="px-4 py-3" data-i18n="tableColIncident">i (°)</th>
+                                <th scope="col" class="px-4 py-3" data-i18n="tableColRefraction">r (°)</th>
+                                <th scope="col" class="px-4 py-3 bg-blue-50 text-blue-700" data-i18n="tableColSinI">sin(i) (y)</th>
+                                <th scope="col" class="px-4 py-3 bg-green-50 text-green-700 rounded-tr-lg" data-i18n="tableColSinR">sin(r) (x)</th>
                             </tr>
                         </thead>
                         <tbody id="dataTableBody">
-                            <!-- Data rows will appear here -->
                             <tr class="border-b hover:bg-gray-50">
-                                <td colspan="5" class="px-4 py-4 text-center text-gray-400 italic">
-                                    尚未記錄數據。調整角度並點擊「記錄數據點」。
+                                <td colspan="5" class="px-4 py-4 text-center text-gray-400 italic" data-i18n="tableEmpty">
+                                    No data yet. Adjust the angles and tap "Record Data Point".
                                 </td>
                             </tr>
                         </tbody>
@@ -188,30 +175,152 @@
     </main>
 
     <footer class="text-center p-4 text-gray-400 text-xs">
-        &copy; 2023 物理實驗室教學工具
+        &copy; 2023 <span data-i18n="footerText">Physics Lab Teaching Tools</span>
     </footer>
 
     <script>
-        // Math Utilities
+        const translations = {
+            "en-US": {
+                title: "Snell's Law Refraction Lab",
+                languageButtonEnglish: "EN",
+                languageButtonChinese: "繁",
+                headerTitle: "Snell's Law Virtual Lab",
+                headerSubtitle: "Measure refractive index using refraction angles (Snell's Law)",
+                resetButton: "Reset Experiment",
+                incidentLabel: "Angle of incidence (i):",
+                refractionLabel: "Angle of refraction (r):",
+                canvasHint: "Tap or drag on the canvas to adjust the angle directly.",
+                controlsHeading: "Parameter Controls",
+                incidentSliderLabel: "Angle of incidence (i)",
+                incidentSliderMin: "0° (Normal)",
+                riSliderLabel: "Refractive index of medium (n)",
+                riHintAir: "1.0 (Air)",
+                riHintGlass: "1.5 (Glass)",
+                riHintDiamond: "2.4 (Diamond)",
+                recordButton: "Record Data Point",
+                graphHeading: "sin(i) vs sin(r) Relationship",
+                slopeLabel: "Best-fit slope (m)",
+                calcNLabel: "Measured refractive index (n)",
+                graphExplanation: "Theory: n₁ sin(i) = n₂ sin(r). Taking n₁ = 1 (air), the slope of sin(i) vs sin(r) approximates n.",
+                tableHeading: "Recorded Data",
+                clearButton: "Clear Data",
+                tableColIncident: "i (°)",
+                tableColRefraction: "r (°)",
+                tableColSinI: "sin(i) (y)",
+                tableColSinR: "sin(r) (x)",
+                tableEmpty: "No data yet. Adjust the angles and tap \"Record Data Point\".",
+                footerText: "Physics Lab Teaching Tools"
+            },
+            "zh-HK": {
+                title: "斯涅耳定律 - 折射率實驗",
+                languageButtonEnglish: "EN",
+                languageButtonChinese: "繁",
+                headerTitle: "斯涅耳定律虛擬實驗室",
+                headerSubtitle: "測定透明介質的折射率（Snell 定律）",
+                resetButton: "重置實驗",
+                incidentLabel: "入射角 (i)：",
+                refractionLabel: "折射角 (r)：",
+                canvasHint: "點擊或拖曳畫布可直接改變角度。",
+                controlsHeading: "實驗參數控制",
+                incidentSliderLabel: "入射角 (i)",
+                incidentSliderMin: "0°（法線）",
+                riSliderLabel: "透明介質折射率 (n)",
+                riHintAir: "1.0（空氣）",
+                riHintGlass: "1.5（玻璃）",
+                riHintDiamond: "2.4（鑽石）",
+                recordButton: "記錄數據點",
+                graphHeading: "sin(i) 對 sin(r) 關係圖",
+                slopeLabel: "最佳擬合斜率 (m)",
+                calcNLabel: "計算折射率 (n)",
+                graphExplanation: "理論：n₁ sin(i) = n₂ sin(r)。當 n₁ = 1（空氣）時，sin(i) 與 sin(r) 的斜率近似於 n。",
+                tableHeading: "實驗數據表",
+                clearButton: "清除數據",
+                tableColIncident: "i (°)",
+                tableColRefraction: "r (°)",
+                tableColSinI: "sin(i) (y)",
+                tableColSinR: "sin(r) (x)",
+                tableEmpty: "尚未記錄數據。調整角度並點擊「記錄數據點」。",
+                footerText: "物理實驗室教學工具"
+            }
+        };
+
+        let currentLang = "en-US";
+
+        function getTranslation(key) {
+            const dict = translations[currentLang] || translations["en-US"];
+            return dict[key] ?? "";
+        }
+
+        function applyTranslations() {
+            const dict = translations[currentLang] || translations["en-US"];
+            document.documentElement.lang = currentLang;
+            document.title = dict.title || document.title;
+            document.querySelectorAll("[data-i18n]").forEach((el) => {
+                const key = el.dataset.i18n;
+                if (!key) return;
+                const text = dict[key];
+                if (typeof text !== "undefined") {
+                    el.textContent = text;
+                }
+            });
+            updateLangButtons();
+            updateTable();
+            updateSimulation();
+        }
+
+        function updateLangButtons() {
+            document.querySelectorAll("[data-lang-switch]").forEach((btn) => {
+                const isActive = btn.dataset.langSwitch === currentLang;
+                btn.classList.toggle("text-indigo-900", isActive);
+                btn.classList.toggle("text-indigo-700", !isActive);
+                btn.classList.toggle("shadow-lg", isActive);
+                btn.classList.toggle("bg-white", isActive);
+                btn.classList.toggle("bg-white/80", !isActive);
+                btn.classList.toggle("ring-1", isActive);
+                btn.classList.toggle("ring-indigo-300", isActive);
+            });
+        }
+
+        function setLanguage(lang, skipUrlUpdate = false) {
+            if (!translations[lang]) lang = "en-US";
+            currentLang = lang;
+            applyTranslations();
+            if (!skipUrlUpdate) {
+                const url = new URL(window.location);
+                url.searchParams.set("lang", lang);
+                window.history.pushState({}, "", url);
+            }
+        }
+
+        function setupLanguageSwitcher() {
+            document.querySelectorAll("[data-lang-switch]").forEach((btn) => {
+                btn.addEventListener("click", () => setLanguage(btn.dataset.langSwitch));
+            });
+        }
+
+        function initLanguage() {
+            setupLanguageSwitcher();
+            const params = new URLSearchParams(window.location.search);
+            const langParam = params.get("lang");
+            const initialLang = translations[langParam] ? langParam : "en-US";
+            setLanguage(initialLang, true);
+        }
+
         const degToRad = (deg) => deg * (Math.PI / 180);
         const radToDeg = (rad) => rad * (180 / Math.PI);
 
-        // State
         let state = {
             angleIncident: 30,
             refractiveIndex: 1.5,
-            dataPoints: [] // { i, r, sinI, sinR }
+            dataPoints: []
         };
 
-        // Interaction State
-        let isDragging = false; // Moved here from init() to be globally accessible
+        let isDragging = false;
 
-        // DOM Elements
         const simCanvas = document.getElementById('simCanvas');
         const simCtx = simCanvas.getContext('2d');
         const graphCanvas = document.getElementById('graphCanvas');
         const graphCtx = graphCanvas.getContext('2d');
-        
         const angleSlider = document.getElementById('angleSlider');
         const nSlider = document.getElementById('nSlider');
         const displayAngle = document.getElementById('display-angle');
@@ -221,154 +330,118 @@
         const slopeValue = document.getElementById('slopeValue');
         const calcN = document.getElementById('calcN');
         const dataTableBody = document.getElementById('dataTableBody');
+        const recordButton = document.getElementById('recordButton');
+        const clearButton = document.getElementById('clearButton');
+        const resetButton = document.getElementById('resetButton');
 
-        // Init
         function init() {
             resizeCanvases();
             window.addEventListener('resize', resizeCanvases);
-            
             angleSlider.addEventListener('input', (e) => {
                 state.angleIncident = parseFloat(e.target.value);
                 updateSimulation();
             });
-
             nSlider.addEventListener('input', (e) => {
                 state.refractiveIndex = parseFloat(e.target.value);
                 updateSimulation();
             });
-
-            // Interactive Canvas
             simCanvas.addEventListener('mousedown', startDrag);
             simCanvas.addEventListener('touchstart', startDrag, {passive: false});
-            
             window.addEventListener('mousemove', doDrag);
             window.addEventListener('touchmove', doDrag, {passive: false});
-            
             window.addEventListener('mouseup', endDrag);
             window.addEventListener('touchend', endDrag);
-
+            recordButton.addEventListener('click', recordData);
+            clearButton.addEventListener('click', clearData);
+            resetButton.addEventListener('click', resetExperiment);
             updateSimulation();
             updateGraph();
         }
 
         function resizeCanvases() {
-            // Make canvas crisp on high DPI screens
             const dpr = window.devicePixelRatio || 1;
-            
-            // Sim Canvas
             const simRect = simCanvas.parentElement.getBoundingClientRect();
             simCanvas.width = simRect.width * dpr;
             simCanvas.height = 400 * dpr;
+            simCtx.setTransform(1, 0, 0, 1, 0, 0);
             simCtx.scale(dpr, dpr);
             simCanvas.style.width = `${simRect.width}px`;
             simCanvas.style.height = `400px`;
-
-            // Graph Canvas
             const graphRect = graphCanvas.parentElement.getBoundingClientRect();
             graphCanvas.width = graphRect.width * dpr;
-            graphCanvas.height = 256 * dpr; // h-64
+            graphCanvas.height = 256 * dpr;
+            graphCtx.setTransform(1, 0, 0, 1, 0, 0);
             graphCtx.scale(dpr, dpr);
             graphCanvas.style.width = `${graphRect.width}px`;
             graphCanvas.style.height = `256px`;
-
             updateSimulation();
             updateGraph();
         }
 
-        // Simulation Logic
         function updateSimulation() {
-            const width = simCanvas.width / (window.devicePixelRatio || 1);
-            const height = simCanvas.height / (window.devicePixelRatio || 1);
+            const dpr = window.devicePixelRatio || 1;
+            const width = simCanvas.width / dpr;
+            const height = simCanvas.height / dpr;
             const centerX = width / 2;
             const centerY = height / 2 + 50;
             const radius = 140;
-
-            // Clear
             simCtx.clearRect(0, 0, width, height);
-
-            // Physics Calc
-            // n1 * sin(i) = n2 * sin(r)
-            // Air (n1=1) -> Block (n2=n)
             const n1 = 1.0;
             const n2 = state.refractiveIndex;
             const thetaI = degToRad(state.angleIncident);
-            
-            // sin(r) = (n1/n2) * sin(i)
-            const sinR = (n1 / n2) * Math.sin(thetaI);
+            const sinR = Math.min((n1 / n2) * Math.sin(thetaI), 1);
             const thetaR = Math.asin(sinR);
-            
             const angleR_deg = radToDeg(thetaR);
-
-            // Update UI Text
             displayAngle.textContent = state.angleIncident.toFixed(1) + "°";
             displayRI.textContent = state.refractiveIndex.toFixed(2);
             valI.textContent = state.angleIncident.toFixed(1);
             valR.textContent = angleR_deg.toFixed(1);
 
-            // Draw Semi-Circle Block
             simCtx.beginPath();
-            // Draw bottom half (0 to PI) instead of top half
-            simCtx.arc(centerX, centerY, radius, 0, Math.PI); 
-            simCtx.closePath(); // Close the top flat side
-            simCtx.fillStyle = 'rgba(199, 210, 254, 0.5)'; // Indigo-200 with opacity
+            simCtx.arc(centerX, centerY, radius, 0, Math.PI);
+            simCtx.closePath();
+            simCtx.fillStyle = 'rgba(199, 210, 254, 0.5)';
             simCtx.fill();
             simCtx.strokeStyle = '#4F46E5';
             simCtx.lineWidth = 2;
             simCtx.stroke();
 
-            // Draw Normal Line (Dashed)
             simCtx.beginPath();
             simCtx.setLineDash([5, 5]);
             simCtx.moveTo(centerX, centerY - radius - 20);
-            // Extend normal line through the bottom block
             simCtx.lineTo(centerX, centerY + radius + 20);
-            simCtx.strokeStyle = '#6B7280'; // Gray
+            simCtx.strokeStyle = '#6B7280';
             simCtx.lineWidth = 1;
             simCtx.stroke();
             simCtx.setLineDash([]);
 
-            // Draw Incident Ray (Air)
-            // Comes from top-left or top-right depending on side, let's say Left relative to normal
-            // Actually, usually shown relative to normal. Let's put source on top-left.
             const rayLength = radius + 40;
             const incX = centerX - rayLength * Math.sin(thetaI);
             const incY = centerY - rayLength * Math.cos(thetaI);
-
             simCtx.beginPath();
             simCtx.moveTo(incX, incY);
             simCtx.lineTo(centerX, centerY);
-            simCtx.strokeStyle = '#EF4444'; // Red
+            simCtx.strokeStyle = '#EF4444';
             simCtx.lineWidth = 3;
             simCtx.stroke();
-
-            // Arrow on Incident
             drawArrow(simCtx, incX, incY, centerX, centerY, '#EF4444');
 
-            // Draw Refracted Ray (Block)
-            // Goes into the block
             const refX = centerX + radius * Math.sin(thetaR);
-            const refY = centerY + radius * Math.cos(thetaR); // Positive Y is down
-
+            const refY = centerY + radius * Math.cos(thetaR);
             simCtx.beginPath();
             simCtx.moveTo(centerX, centerY);
             simCtx.lineTo(refX, refY);
-            simCtx.strokeStyle = '#2563EB'; // Blue
+            simCtx.strokeStyle = '#2563EB';
             simCtx.lineWidth = 3;
             simCtx.stroke();
-
-            // Arrow on Refracted
             drawArrow(simCtx, centerX, centerY, refX, refY, '#2563EB');
 
-            // Draw Labels
             simCtx.font = "bold 14px sans-serif";
             simCtx.fillStyle = "#EF4444";
             simCtx.fillText("i", centerX - 20 * Math.sin(thetaI/2), centerY - 30);
-            
             simCtx.fillStyle = "#2563EB";
             simCtx.fillText("r", centerX + 20 * Math.sin(thetaR/2), centerY + 40);
-
             simCtx.fillStyle = "#374151";
-            // Move label 'n' inside the bottom block
             simCtx.fillText(`n = ${state.refractiveIndex.toFixed(2)}`, centerX + radius - 60, centerY + 30);
         }
 
@@ -377,10 +450,8 @@
             const dx = toX - fromX;
             const dy = toY - fromY;
             const angle = Math.atan2(dy, dx);
-            // Midpoint for arrow
             const midX = (fromX + toX) / 2;
             const midY = (fromY + toY) / 2;
-
             ctx.beginPath();
             ctx.moveTo(midX, midY);
             ctx.lineTo(midX - headlen * Math.cos(angle - Math.PI / 6), midY - headlen * Math.sin(angle - Math.PI / 6));
@@ -391,13 +462,10 @@
             ctx.stroke();
         }
 
-        // Interaction
         function startDrag(e) {
             const rect = simCanvas.getBoundingClientRect();
             const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
             const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-            
-            // Check if near incident ray area (upper half)
             if (y < 400/2 + 50) {
                 isDragging = true;
                 updateAngleFromMouse(x, y);
@@ -406,7 +474,7 @@
 
         function doDrag(e) {
             if (!isDragging) return;
-            e.preventDefault(); // prevent scroll on touch
+            e.preventDefault();
             const rect = simCanvas.getBoundingClientRect();
             const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
             const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
@@ -419,65 +487,37 @@
 
         function updateAngleFromMouse(x, y) {
             const width = simCanvas.getBoundingClientRect().width;
-            const height = 400; // fixed height logic from resize
             const centerX = width / 2;
-            const centerY = height / 2 + 50;
-
-            // Calculate angle relative to vertical normal (up)
-            // Mouse is at (x, y). Vector from center to mouse is (x - cx, y - cy).
-            // But incident is in upper quadrants.
-            
-            // dx is horizontal distance from normal.
-            let dx = centerX - x; // Positive if mouse is left
-            let dy = centerY - y; // Positive if mouse is above
-
-            if (dy < 0) return; // Only allow dragging above the line
-
-            // atan2(x, y) gives angle from Y axis in math usually? 
-            // let's use simple atan
+            const centerY = 400 / 2 + 50;
+            const dx = centerX - x;
+            const dy = centerY - y;
+            if (dy < 0) return;
             let angleRad = Math.atan2(dx, dy);
             let angleDeg = radToDeg(angleRad);
-
-            // Clamp
-            if (angleDeg < 0) angleDeg = 0;
-            if (angleDeg > 85) angleDeg = 85;
-
+            angleDeg = Math.max(0, Math.min(85, angleDeg));
             state.angleIncident = angleDeg;
             angleSlider.value = angleDeg;
             updateSimulation();
         }
 
-        // Data Logic
         function recordData() {
             const i = state.angleIncident;
-            const r_rad = Math.asin((1 / state.refractiveIndex) * Math.sin(degToRad(i)));
-            const r = radToDeg(r_rad);
-
             const sinI = Math.sin(degToRad(i));
-            const sinR = Math.sin(r_rad);
-
-            const newData = {
-                id: Date.now(),
-                i: i,
-                r: r,
-                sinI: sinI,
-                sinR: sinR
-            };
-
+            const sinR = Math.min((1 / state.refractiveIndex) * sinI, 1);
+            const r = radToDeg(Math.asin(sinR));
+            const newData = { id: Date.now(), i, r, sinI, sinR };
             state.dataPoints.push(newData);
-            // Sort by i ascending for cleaner graph lines if we connected them (we won't, just scatter)
             state.dataPoints.sort((a, b) => a.i - b.i);
-
             updateTable();
             updateGraph();
         }
 
         function clearData() {
             state.dataPoints = [];
-            updateTable();
-            updateGraph();
             slopeValue.textContent = "--";
             calcN.textContent = "--";
+            updateTable();
+            updateGraph();
         }
 
         function updateTable() {
@@ -485,13 +525,12 @@
             if (state.dataPoints.length === 0) {
                 dataTableBody.innerHTML = `
                     <tr class="border-b hover:bg-gray-50">
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-400 italic">
-                            尚未記錄數據。調整角度並點擊「記錄數據點」。
+                        <td colspan="5" class="px-4 py-4 text-center text-gray-400 italic" data-i18n="tableEmpty">
+                            ${getTranslation('tableEmpty')}
                         </td>
                     </tr>`;
                 return;
             }
-
             state.dataPoints.forEach((pt, index) => {
                 const row = document.createElement('tr');
                 row.className = "border-b hover:bg-gray-50 transition";
@@ -515,45 +554,31 @@
             updateSimulation();
         }
 
-        // Graphing & Regression
         function updateGraph() {
-            const width = graphCanvas.width / (window.devicePixelRatio || 1);
-            const height = graphCanvas.height / (window.devicePixelRatio || 1);
+            const dpr = window.devicePixelRatio || 1;
+            const width = graphCanvas.width / dpr;
+            const height = graphCanvas.height / dpr;
             graphCtx.clearRect(0, 0, width, height);
-
-            // Margins (Increased top/right padding for labels)
             const padLeft = 50;
             const padBottom = 40;
             const padRight = 50; 
             const padTop = 35;
             const gW = width - padLeft - padRight;
             const gH = height - padTop - padBottom;
-
-            // Draw Axes Lines
             graphCtx.beginPath();
             graphCtx.strokeStyle = '#9CA3AF';
             graphCtx.lineWidth = 2;
-            
-            // Y Axis Line (Bottom to Top)
             graphCtx.moveTo(padLeft, height - padBottom);
             graphCtx.lineTo(padLeft, padTop);
-            
-            // X Axis Line (Left to Right)
             graphCtx.moveTo(padLeft, height - padBottom);
             graphCtx.lineTo(width - padRight, height - padBottom);
             graphCtx.stroke();
-
-            // Draw Arrow Heads
             graphCtx.beginPath();
             const headLen = 8;
-            
-            // Y Axis Arrow Head (Up)
             graphCtx.moveTo(padLeft, padTop);
             graphCtx.lineTo(padLeft - 5, padTop + headLen);
             graphCtx.moveTo(padLeft, padTop);
             graphCtx.lineTo(padLeft + 5, padTop + headLen);
-
-            // X Axis Arrow Head (Right)
             const xEnd = width - padRight;
             const yEnd = height - padBottom;
             graphCtx.moveTo(xEnd, yEnd);
@@ -561,99 +586,65 @@
             graphCtx.moveTo(xEnd, yEnd);
             graphCtx.lineTo(xEnd - headLen, yEnd + 5);
             graphCtx.stroke();
-
-            // Labels positioned near arrows
             graphCtx.fillStyle = '#374151';
             graphCtx.font = "bold 14px sans-serif";
-            
-            // sin(r) label - Next to X arrow
             graphCtx.textAlign = "left";
             graphCtx.fillText("sin(r)", xEnd + 8, yEnd + 4);
-            
-            // sin(i) label - Above Y arrow
             graphCtx.textAlign = "center";
             graphCtx.fillText("sin(i)", padLeft, padTop - 10);
-
-            // Max Scale (Both Sin values max out at 1)
-            // X Axis: 0 to 1 (sin r) - Actually max sin(r) depends on n. 
-            // If n=1.5, max sin(r) = 1/1.5 = 0.66.
-            // Let's fix scale 0 to 1 for both to be intuitive.
-            const maxX = 0.8; // usually sin(r) is smaller
+            const maxX = 0.8;
             const maxY = 1.0;
-
-            // Helper: Data to Pixels
             const d2pX = (val) => padLeft + (val / maxX) * gW;
             const d2pY = (val) => height - padBottom - (val / maxY) * gH;
-
-            // Grid Lines
             graphCtx.strokeStyle = '#E5E7EB';
             graphCtx.lineWidth = 1;
             graphCtx.beginPath();
             for(let i=0.2; i<=1.0; i+=0.2) {
-                // Horizontal
-                let y = d2pY(i);
+                const y = d2pY(i);
                 graphCtx.moveTo(padLeft, y);
                 graphCtx.lineTo(width - padRight, y);
-                // Vertical
-                let x = d2pX(i * maxX); // Scale x relative to maxX
-                if (i*maxX <= maxX) { // Bounds check roughly
-                     // Not perfect grid logic but simple visual aid
-                }
+                const x = d2pX(i * maxX);
+                graphCtx.moveTo(x, height - padBottom);
             }
             graphCtx.stroke();
 
-            // Draw Points
             if (state.dataPoints.length > 0) {
                 state.dataPoints.forEach(pt => {
                     const px = d2pX(pt.sinR);
                     const py = d2pY(pt.sinI);
-
                     graphCtx.beginPath();
                     graphCtx.arc(px, py, 4, 0, Math.PI * 2);
-                    graphCtx.fillStyle = '#DC2626'; // Red dots
+                    graphCtx.fillStyle = '#DC2626';
                     graphCtx.fill();
                 });
-
-                // Calculate Linear Regression (Constraint: Must pass through 0,0 theoretically)
-                // Model: y = mx
-                // m = sum(x*y) / sum(x*x)
                 let sumXY = 0;
                 let sumXX = 0;
                 state.dataPoints.forEach(pt => {
                     sumXY += pt.sinR * pt.sinI;
                     sumXX += pt.sinR * pt.sinR;
                 });
-
                 if (sumXX > 0) {
                     const slope = sumXY / sumXX;
-                    
-                    // Draw Line
                     graphCtx.beginPath();
-                    graphCtx.moveTo(d2pX(0), d2pY(0)); // 0,0
-                    // End point at edge of graph
-                    // y = slope * x => if x=maxX, y=slope*maxX. 
+                    graphCtx.moveTo(d2pX(0), d2pY(0));
                     let endX = maxX;
                     let endY = slope * endX;
                     if (endY > maxY) {
                         endY = maxY;
                         endX = endY / slope;
                     }
-                    
                     graphCtx.lineTo(d2pX(endX), d2pY(endY));
-                    graphCtx.strokeStyle = '#10B981'; // Green line
+                    graphCtx.strokeStyle = '#10B981';
                     graphCtx.lineWidth = 2;
                     graphCtx.stroke();
-
-                    // Update Results Text
                     slopeValue.textContent = slope.toFixed(3);
                     calcN.textContent = slope.toFixed(3);
                 }
             }
         }
 
-        // Start
+        initLanguage();
         init();
-
     </script>
 </body>
 </html>
