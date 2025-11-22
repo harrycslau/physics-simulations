@@ -193,7 +193,7 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/quantum-physics/photoelectric-effect.html",
-        "screenshotUrl": "screenshots/default.png",
+        "screenshotUrl": "screenshots/photoelectric-effect.png",
         "createdAt": "2025-11-22",
         "updatedAt": "2025-11-22"
     },
@@ -215,7 +215,7 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/chemistry/atomic-orbital.html",
-        "screenshotUrl": "screenshots/default.png",
+        "screenshotUrl": "screenshots/atomic-orbital.png",
         "createdAt": "2025-11-22",
         "updatedAt": "2025-11-22"
     },
@@ -237,7 +237,7 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/biology/plant-cell.html",
-        "screenshotUrl": "screenshots/default.png",
+        "screenshotUrl": "screenshots/plant-cell.png",
         "createdAt": "2025-11-22",
         "updatedAt": "2025-11-22"
     },
@@ -256,10 +256,10 @@
             "zh-HK": "利用滑車和懸掛質量系統模擬 F=ma。"
         },
         "contributors": [
-            "Bryan Leung"
+            "Yin Kwong Poon"
         ],
         "simulationUrl": "simulations/force-and-motion/newton-2nd-law.html",
-        "screenshotUrl": "screenshots/default.png",
+        "screenshotUrl": "screenshots/newton-2nd-law.png",
         "createdAt": "2025-11-22",
         "updatedAt": "2025-11-22"
     },
@@ -278,10 +278,10 @@
             "zh-HK": "學習單擺運動和拋體物理。"
         },
         "contributors": [
-            "Bryan Leung"
+            ""
         ],
         "simulationUrl": "simulations/force-and-motion/acrobat-game.html",
-        "screenshotUrl": "screenshots/default.png",
+        "screenshotUrl": "screenshots/acrobat-game.png",
         "createdAt": "2025-11-22",
         "updatedAt": "2025-11-22"
     }
