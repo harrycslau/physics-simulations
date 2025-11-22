@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atomic Structure Visualizer - Chemistry Simulation</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+
+        /* Custom Scrollbar for sidebar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white antialiased">
+
+    <!-- Language Selector -->
+    <div class="absolute top-4 right-4 z-50">
+        <div class="flex bg-gray-800/80 backdrop-blur-sm rounded-full p-1 border border-gray-700 shadow-lg">
+            <button onclick="setLanguage('en-US')" id="btn-en"
+                class="px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md">EN</button>
+            <button onclick="setLanguage('zh-HK')" id="btn-zh"
+                class="px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-gray-400 hover:text-white hover:bg-gray-700">繁</button>
+        </div>
+    </div>
+
+    <div class="flex flex-col md:flex-row min-h-screen md:h-screen overflow-x-hidden">
+
+        <!-- LEFT PANEL: Controls & Info -->
+        <div
+            class="w-full md:w-96 bg-gray-800/90 backdrop-blur-md p-6 flex flex-col gap-6 border-r border-gray-700 z-10 shadow-2xl overflow-y-auto shrink-0">
+
+            <header class="mb-2">
+                <div class="flex items-center gap-2 text-blue-400 mb-1">
+                    <!-- Atom Icon SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-6 h-6">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <path
+                            d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z">
+                        </path>
+                        <path
+                            d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z">
+                        </path>
+                    </svg>
+                    <h1 class="text-xl font-bold tracking-wider" data-i18n="app_title">CHEM VISUALIZER</h1>
+                </div>
+                <p class="text-gray-400 text-sm" data-i18n="app_subtitle">Introductory University Chemistry: Atomic
+                    Structure</p>
+            </header>
+
+            <!-- Element Display Card -->
+            <div class="space-y-4">
+                <div class="h-1 w-full rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
+                    <div
+                        class="flex flex-col items-center justify-center text-center bg-gray-800/70 rounded-xl border border-gray-600 shadow-inner px-6 py-6">
+                        <div id="display-symbol" class="text-6xl font-bold text-white font-mono">H</div>
+                        <div id="display-name" class="text-xl text-blue-300 font-medium mt-3 break-words">Hydrogen</div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="bg-black/40 p-4 rounded-xl border border-white/5">
+                            <div class="text-xs text-gray-400 tracking-wide mb-2" data-i18n="atomic_number">
+                                Atomic Number (Z)</div>
+                            <div id="display-z-val" class="text-3xl font-semibold text-white">1</div>
+                        </div>
+
+                        <div class="bg-black/40 p-4 rounded-xl border border-white/5">
+                            <div class="text-xs text-gray-400 tracking-wide mb-2" data-i18n="electron_config">
+                                Electron Config</div>
+                            <code id="display-config"
+                                class="block text-green-400 font-mono text-lg leading-relaxed break-words">1s1</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="space-y-4">
+                <label class="flex justify-between text-sm font-medium text-gray-300">
+                    <span data-i18n="adjust_element">Adjust Element (Z = 1 ~ 36)</span>
+                    <span id="control-z-val" class="text-blue-400">1</span>
+                </label>
+                <input type="range" id="z-slider" min="1" max="36" step="1" value="1"
+                    class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400 transition-all">
+                <div class="flex justify-between text-xs text-gray-500 font-mono">
+                    <span>H (1)</span>
+                    <span>Kr (36)</span>
+                </div>
+            </div>
+
+            <!-- Orbital Legend -->
+            <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
+                <h3 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
+                    <!-- Layers Icon SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-4 h-4">
+                        <path
+                            d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z">
+                        </path>
+                        <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"></path>
+                        <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"></path>
+                    </svg>
+                    <span data-i18n="legend_title">Orbital Types</span>
+                </h3>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
+                        <span data-i18n="legend_s">s Orbital (Spherical)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"></div>
+                        <span data-i18n="legend_p">p Orbital (Dumbbell)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]"></div>
+                        <span data-i18n="legend_d">d Orbital (Clover)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span data-i18n="legend_nucleus">Nucleus (Protons)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teacher's Note -->
+            <div class="mt-auto bg-blue-900/20 p-4 rounded-lg border border-blue-800/50">
+                <div class="flex items-start gap-3">
+                    <!-- Info Icon SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-5 h-5 text-blue-400 shrink-0 mt-0.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4"></path>
+                        <path d="M12 8h.01"></path>
+                    </svg>
+                    <div>
+                        <h4 class="text-sm font-bold text-blue-300 mb-1" data-i18n="note_title">Teacher's Note:</h4>
+                        <p class="text-xs text-blue-200/80 leading-relaxed" data-i18n="note_content">
+                            Observe that as the atomic number increases, electrons fill from lower to higher energy
+                            levels according to the <strong>Aufbau Principle</strong>. For example, although the
+                            principal quantum number of 4s (n=4) is larger than 3d (n=3), 4s has lower energy, so
+                            Potassium (K) electrons fill 4s first.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: 3D Visualization -->
+        <div class="flex-1 relative bg-gradient-to-b from-gray-900 via-gray-900 to-black overflow-hidden"
+            id="canvas-container">
+
+            <!-- Overlay Controls -->
+            <div class="absolute top-4 left-4 z-10 flex gap-2 pointer-events-none">
+                <div
+                    class="bg-black/40 backdrop-blur text-xs px-3 py-1.5 rounded-full text-gray-300 border border-white/10 flex items-center gap-2 pointer-events-auto select-none">
+                    <!-- Rotate Icon SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-3 h-3">
+                        <path d="M21 2v6h-6"></path>
+                        <path d="M3 12a9 9 0 0 1 15-6"></path>
+                        <path d="M3 22v-6h6"></path>
+                        <path d="M21 12a9 9 0 0 1-15 6"></path>
+                    </svg>
+                    <span data-i18n="drag_rotate">Drag to Rotate</span>
+                </div>
+            </div>
+
+            <!-- Active Orbitals List (Overlay) -->
+            <div class="absolute bottom-6 left-6 max-w-md pointer-events-none">
+                <h3 class="text-xs font-bold text-gray-500 uppercase mb-2" data-i18n="active_orbitals">Active Orbitals
+                </h3>
+                <div id="active-orbitals-list" class="flex flex-wrap gap-1">
+                    <!-- JS will populate this -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // -----------------------------------------------------------------------------
+        // 1. I18N & DATA
+        // -----------------------------------------------------------------------------
+        const translations = {
+            'en-US': {
+                app_title: "CHEM VISUALIZER",
+                app_subtitle: "Introductory University Chemistry: Atomic Structure",
+                atomic_number: "Atomic Number (Z)",
+                electron_config: "Electron Config",
+                adjust_element: "Adjust Element (Z = 1 ~ 36)",
+                legend_title: "Orbital Types",
+                legend_s: "s Orbital (Spherical)",
+                legend_p: "p Orbital (Dumbbell)",
+                legend_d: "d Orbital (Clover)",
+                legend_nucleus: "Nucleus (Protons)",
+                note_title: "Teacher's Note:",
+                note_content: "Observe that as the atomic number increases, electrons fill from lower to higher energy levels according to the <strong>Aufbau Principle</strong>. For example, although the principal quantum number of 4s (n=4) is larger than 3d (n=3), 4s has lower energy, so Potassium (K) electrons fill 4s first.",
+                drag_rotate: "Drag to Rotate",
+                active_orbitals: "Active Orbitals"
+            },
+            'zh-HK': {
+                app_title: "化學視覺化工具",
+                app_subtitle: "大學化學入門：原子結構",
+                atomic_number: "原子序",
+                electron_config: "電子組態",
+                adjust_element: "調整元素",
+                legend_title: "軌域圖例",
+                legend_s: "s 軌域（球形）",
+                legend_p: "p 軌域（啞鈴形）",
+                legend_d: "d 軌域（花瓣形）",
+                legend_nucleus: "原子核（質子）",
+                note_title: "老師的筆記：",
+                note_content: "請注意觀察，隨著原子序增加，電子會依照<strong>遞建原理</strong>由低能階往高能階填入。例如，雖然 4s 的主量子數（n=4）比 3d（n=3）大，但 4s 的能量較低，所以鉀的電子會先填入 4s。",
+                drag_rotate: "拖曳旋轉視角",
+                active_orbitals: "活躍軌域"
+            }
+        };
+
+        const ELEMENTS = [
+            { z: 1, symbol: 'H', config: '1s1', name: { 'en-US': 'Hydrogen', 'zh-HK': '氫' } },
+            { z: 2, symbol: 'He', config: '1s2', name: { 'en-US': 'Helium', 'zh-HK': '氦' } },
+            { z: 3, symbol: 'Li', config: '[He] 2s1', name: { 'en-US': 'Lithium', 'zh-HK': '鋰' } },
+            { z: 4, symbol: 'Be', config: '[He] 2s2', name: { 'en-US': 'Beryllium', 'zh-HK': '鈹' } },
+            { z: 5, symbol: 'B', config: '[He] 2s2 2p1', name: { 'en-US': 'Boron', 'zh-HK': '硼' } },
+            { z: 6, symbol: 'C', config: '[He] 2s2 2p2', name: { 'en-US': 'Carbon', 'zh-HK': '碳' } },
+            { z: 7, symbol: 'N', config: '[He] 2s2 2p3', name: { 'en-US': 'Nitrogen', 'zh-HK': '氮' } },
+            { z: 8, symbol: 'O', config: '[He] 2s2 2p4', name: { 'en-US': 'Oxygen', 'zh-HK': '氧' } },
+            { z: 9, symbol: 'F', config: '[He] 2s2 2p5', name: { 'en-US': 'Fluorine', 'zh-HK': '氟' } },
+            { z: 10, symbol: 'Ne', config: '[He] 2s2 2p6', name: { 'en-US': 'Neon', 'zh-HK': '氖' } },
+            { z: 11, symbol: 'Na', config: '[Ne] 3s1', name: { 'en-US': 'Sodium', 'zh-HK': '鈉' } },
+            { z: 12, symbol: 'Mg', config: '[Ne] 3s2', name: { 'en-US': 'Magnesium', 'zh-HK': '鎂' } },
+            { z: 13, symbol: 'Al', config: '[Ne] 3s2 3p1', name: { 'en-US': 'Aluminium', 'zh-HK': '鋁' } },
+            { z: 14, symbol: 'Si', config: '[Ne] 3s2 3p2', name: { 'en-US': 'Silicon', 'zh-HK': '矽' } },
+            { z: 15, symbol: 'P', config: '[Ne] 3s2 3p3', name: { 'en-US': 'Phosphorus', 'zh-HK': '磷' } },
+            { z: 16, symbol: 'S', config: '[Ne] 3s2 3p4', name: { 'en-US': 'Sulfur', 'zh-HK': '硫' } },
+            { z: 17, symbol: 'Cl', config: '[Ne] 3s2 3p5', name: { 'en-US': 'Chlorine', 'zh-HK': '氯' } },
+            { z: 18, symbol: 'Ar', config: '[Ne] 3s2 3p6', name: { 'en-US': 'Argon', 'zh-HK': '氬' } },
+            { z: 19, symbol: 'K', config: '[Ar] 4s1', name: { 'en-US': 'Potassium', 'zh-HK': '鉀' } },
+            { z: 20, symbol: 'Ca', config: '[Ar] 4s2', name: { 'en-US': 'Calcium', 'zh-HK': '鈣' } },
+            { z: 21, symbol: 'Sc', config: '[Ar] 3d1 4s2', name: { 'en-US': 'Scandium', 'zh-HK': '鈧' } },
+            { z: 22, symbol: 'Ti', config: '[Ar] 3d2 4s2', name: { 'en-US': 'Titanium', 'zh-HK': '鈦' } },
+            { z: 23, symbol: 'V', config: '[Ar] 3d3 4s2', name: { 'en-US': 'Vanadium', 'zh-HK': '釩' } },
+            { z: 24, symbol: 'Cr', config: '[Ar] 3d5 4s1', name: { 'en-US': 'Chromium', 'zh-HK': '鉻' } },
+            { z: 25, symbol: 'Mn', config: '[Ar] 3d5 4s2', name: { 'en-US': 'Manganese', 'zh-HK': '錳' } },
+            { z: 26, symbol: 'Fe', config: '[Ar] 3d6 4s2', name: { 'en-US': 'Iron', 'zh-HK': '鐵' } },
+            { z: 27, symbol: 'Co', config: '[Ar] 3d7 4s2', name: { 'en-US': 'Cobalt', 'zh-HK': '鈷' } },
+            { z: 28, symbol: 'Ni', config: '[Ar] 3d8 4s2', name: { 'en-US': 'Nickel', 'zh-HK': '鎳' } },
+            { z: 29, symbol: 'Cu', config: '[Ar] 3d10 4s1', name: { 'en-US': 'Copper', 'zh-HK': '銅' } },
+            { z: 30, symbol: 'Zn', config: '[Ar] 3d10 4s2', name: { 'en-US': 'Zinc', 'zh-HK': '鋅' } },
+            { z: 31, symbol: 'Ga', config: '[Ar] 3d10 4s2 4p1', name: { 'en-US': 'Gallium', 'zh-HK': '鎵' } },
+            { z: 32, symbol: 'Ge', config: '[Ar] 3d10 4s2 4p2', name: { 'en-US': 'Germanium', 'zh-HK': '鍺' } },
+            { z: 33, symbol: 'As', config: '[Ar] 3d10 4s2 4p3', name: { 'en-US': 'Arsenic', 'zh-HK': '砷' } },
+            { z: 34, symbol: 'Se', config: '[Ar] 3d10 4s2 4p4', name: { 'en-US': 'Selenium', 'zh-HK': '硒' } },
+            { z: 35, symbol: 'Br', config: '[Ar] 3d10 4s2 4p5', name: { 'en-US': 'Bromine', 'zh-HK': '溴' } },
+            { z: 36, symbol: 'Kr', config: '[Ar] 3d10 4s2 4p6', name: { 'en-US': 'Krypton', 'zh-HK': '氪' } },
+        ];
+
+        let currentLang = 'en-US';
+        let currentZ = 1;
+
+        function setLanguage(lang) {
+            if (translations[lang]) {
+                currentLang = lang;
+                document.documentElement.lang = lang;
+
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('lang', lang);
+                window.history.pushState({}, '', newUrl);
+
+                updateLanguageUI();
+                updateUI(currentZ); // Refresh element name
+            }
+        }
+
+        function updateLanguageUI() {
+            const btnEn = document.getElementById('btn-en');
+            const btnZh = document.getElementById('btn-zh');
+
+            if (currentLang === 'en-US') {
+                btnEn.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md";
+                btnZh.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-gray-400 hover:text-white hover:bg-gray-700";
+            } else {
+                btnZh.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md";
+                btnEn.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-gray-400 hover:text-white hover:bg-gray-700";
+            }
+
+            document.title = translations[currentLang].app_title + " - Chemistry Simulation";
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.innerHTML = translations[currentLang][key]; // Use innerHTML for bold tags
+                }
+            });
+        }
+
+        function getOrbitalsForZ(z) {
+            const orbitals = [];
+            if (z >= 1) orbitals.push({ type: 's', n: 1, electrons: Math.min(z, 2) });
+            if (z >= 3) orbitals.push({ type: 's', n: 2, electrons: Math.min(z - 2, 2) });
+            if (z >= 5) orbitals.push({ type: 'p', n: 2, electrons: Math.min(z - 4, 6) });
+            if (z >= 11) orbitals.push({ type: 's', n: 3, electrons: Math.min(z - 10, 2) });
+            if (z >= 13) orbitals.push({ type: 'p', n: 3, electrons: Math.min(z - 12, 6) });
+            if (z >= 19) orbitals.push({ type: 's', n: 4, electrons: 2 });
+            if (z >= 21) orbitals.push({ type: 'd', n: 3, electrons: Math.min(z - 20, 10) });
+            if (z >= 31) orbitals.push({ type: 'p', n: 4, electrons: Math.min(z - 30, 6) });
+            return orbitals;
+        }
+
+        // -----------------------------------------------------------------------------
+        // 2. THREE.JS SETUP & LOGIC
+        // -----------------------------------------------------------------------------
+        let scene, camera, renderer, atomGroup;
+        let animationId;
+
+        const container = document.getElementById('canvas-container');
+
+        // Colors
+        const COLORS = {
+            proton: 0xff4444,
+            neutron: 0xaaaaaa,
+            sOrbital: 0x4ade80,
+            pOrbital: 0xfacc15,
+            dOrbital: 0xf43f5e,
+            fOrbital: 0x60a5fa,
+        };
+
+        function initThree() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111827);
+            scene.fog = new THREE.FogExp2(0x111827, 0.02);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(5, 5, 10);
+            camera.lookAt(0, 0, 0);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+            container.appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 3);
+            pointLight.position.set(10, 10, 10);
+            scene.add(pointLight);
+
+            const backLight = new THREE.PointLight(0xffffff, 1.5);
+            backLight.position.set(-10, -5, -10);
+            scene.add(backLight);
+
+            // Interaction
+            setupInteraction();
+
+            // Start Loop
+            animate();
+
+            // Initial Draw
+            updateAtom(currentZ);
+        }
+
+        function updateAtom(z) {
+            const oldGroup = scene.getObjectByName('atomGroup');
+            if (oldGroup) scene.remove(oldGroup);
+
+            atomGroup = new THREE.Group();
+            atomGroup.name = 'atomGroup';
+
+            // 1. Nucleus
+            const nucleusGroup = new THREE.Group();
+            const nucleonRadius = 0.15;
+            const n = z < 20 ? z : Math.ceil(z * 1.2);
+
+            const nucleonGeometry = new THREE.SphereGeometry(nucleonRadius, 16, 16);
+
+            const protonMaterial = new THREE.MeshPhongMaterial({
+                color: COLORS.proton,
+                emissive: COLORS.proton,
+                emissiveIntensity: 0.3,
+                shininess: 50
+            });
+            const neutronMaterial = new THREE.MeshPhongMaterial({
+                color: COLORS.neutron,
+                emissive: COLORS.neutron,
+                emissiveIntensity: 0.1,
+                shininess: 50
+            });
+
+            for (let i = 0; i < z + n; i++) {
+                const isProton = i < z;
+                const mesh = new THREE.Mesh(nucleonGeometry, isProton ? protonMaterial : neutronMaterial);
+
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                const r = Math.cbrt(Math.random()) * (z * 0.08);
+
+                mesh.position.x = r * Math.sin(phi) * Math.cos(theta);
+                mesh.position.y = r * Math.sin(phi) * Math.sin(theta);
+                mesh.position.z = r * Math.cos(phi);
+
+                nucleusGroup.add(mesh);
+            }
+            atomGroup.add(nucleusGroup);
+
+            // 2. Orbitals
+            const orbitals = getOrbitalsForZ(z);
+
+            orbitals.forEach(orb => {
+                let color;
+                if (orb.type === 's') color = COLORS.sOrbital;
+                else if (orb.type === 'p') color = COLORS.pOrbital;
+                else if (orb.type === 'd') color = COLORS.dOrbital;
+                else color = COLORS.fOrbital;
+
+                const material = new THREE.MeshPhongMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.2,
+                    transparent: true,
+                    opacity: 0.25,
+                    side: THREE.DoubleSide,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending,
+                    shininess: 60
+                });
+
+                if (orb.type === 's') {
+                    const radius = 0.8 + (orb.n * 0.7);
+                    const geo = new THREE.SphereGeometry(radius, 32, 32);
+                    const mesh = new THREE.Mesh(geo, material);
+                    atomGroup.add(mesh);
+                } else if (orb.type === 'p') {
+                    const distance = 1.2 + (orb.n * 0.6);
+                    const lobeSize = 0.6 + (orb.n * 0.2);
+                    const lobeGeo = new THREE.SphereGeometry(lobeSize, 32, 32);
+
+                    const rotations = [[0, 0, 0], [0, 0, Math.PI / 2], [0, Math.PI / 2, 0]];
+                    rotations.forEach(rot => {
+                        const pGroup = new THREE.Group();
+                        const lobe1 = new THREE.Mesh(lobeGeo, material);
+                        const lobe2 = new THREE.Mesh(lobeGeo, material);
+                        lobe1.scale.set(1.1, 0.9, 0.9);
+                        lobe2.scale.set(1.1, 0.9, 0.9);
+                        lobe1.position.x = distance;
+                        lobe2.position.x = -distance;
+                        pGroup.add(lobe1);
+                        pGroup.add(lobe2);
+                        pGroup.rotation.set(...rot);
+                        atomGroup.add(pGroup);
+                    });
+                } else if (orb.type === 'd') {
+                    const scale = 1.5 + (orb.n * 0.5);
+                    const lobeGeo = new THREE.SphereGeometry(1, 24, 24);
+                    const dGroup = new THREE.Group();
+
+                    for (let i = 0; i < 4; i++) {
+                        const lobe = new THREE.Mesh(lobeGeo, material);
+                        lobe.scale.set(0.4 * scale, 1 * scale, 0.4 * scale);
+                        const angle = i * Math.PI / 2;
+                        const radius = 0.8 * scale;
+                        lobe.position.x = Math.cos(angle) * radius;
+                        lobe.position.y = Math.sin(angle) * radius;
+                        lobe.rotation.z = angle;
+                        dGroup.add(lobe);
+                    }
+                    dGroup.rotation.x = Math.random() * Math.PI;
+                    dGroup.rotation.y = Math.random() * Math.PI;
+                    atomGroup.add(dGroup);
+                }
+            });
+
+            scene.add(atomGroup);
+        }
+
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            if (atomGroup) {
+                atomGroup.rotation.y += 0.002;
+                atomGroup.rotation.z += 0.001;
+            }
+            renderer.render(scene, camera);
+        }
+
+        function setupInteraction() {
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+
+            const onMouseDown = (e) => isDragging = true;
+            const onMouseUp = () => isDragging = false;
+            const onMouseMove = (e) => {
+                if (isDragging) {
+                    const deltaMove = {
+                        x: e.offsetX - previousMousePosition.x,
+                        y: e.offsetY - previousMousePosition.y
+                    };
+                    if (atomGroup) {
+                        atomGroup.rotation.y += deltaMove.x * 0.01;
+                        atomGroup.rotation.x += deltaMove.y * 0.01;
+                    }
+                }
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            };
+
+            container.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mouseup', onMouseUp);
+            container.addEventListener('mousemove', onMouseMove);
+            container.addEventListener('touchstart', () => isDragging = true);
+            window.addEventListener('touchend', () => isDragging = false);
+
+            window.addEventListener('resize', () => {
+                if (!camera || !renderer) return;
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        // -----------------------------------------------------------------------------
+        // 3. UI UPDATE LOGIC
+        // -----------------------------------------------------------------------------
+
+        const slider = document.getElementById('z-slider');
+
+        function updateUI(z) {
+            const element = ELEMENTS.find(e => e.z === parseInt(z)) || ELEMENTS[0];
+
+            // Text updates
+            document.getElementById('display-symbol').innerText = element.symbol;
+            document.getElementById('display-name').innerText = element.name[currentLang];
+            document.getElementById('display-z-val').innerText = element.z;
+            document.getElementById('display-config').innerText = element.config;
+            document.getElementById('control-z-val').innerText = element.z;
+
+            // Active Orbitals List update
+            const listContainer = document.getElementById('active-orbitals-list');
+            listContainer.innerHTML = '';
+            const activeOrbitals = getOrbitalsForZ(parseInt(z));
+
+            activeOrbitals.forEach(orb => {
+                const span = document.createElement('span');
+                let colorClass = '';
+                if (orb.type === 's') colorClass = 'bg-green-500/20 border-green-500/40 text-green-200';
+                else if (orb.type === 'p') colorClass = 'bg-yellow-500/20 border-yellow-500/40 text-yellow-200';
+                else if (orb.type === 'd') colorClass = 'bg-rose-500/20 border-rose-500/40 text-rose-200';
+                else colorClass = 'bg-blue-500/20 border-blue-500/40 text-blue-200';
+
+                span.className = `px-2 py-1 rounded text-xs font-mono border backdrop-blur-sm ${colorClass}`;
+                span.innerHTML = `${orb.n}${orb.type}<sup>${orb.electrons}</sup>`;
+                listContainer.appendChild(span);
+            });
+        }
+
+        slider.addEventListener('input', (e) => {
+            const z = e.target.value;
+            currentZ = parseInt(z);
+            updateUI(currentZ);
+            updateAtom(currentZ);
+        });
+
+        // -----------------------------------------------------------------------------
+        // 4. BOOTSTRAP
+        // -----------------------------------------------------------------------------
+        window.addEventListener('DOMContentLoaded', () => {
+            // Init Language
+            const urlParams = new URLSearchParams(window.location.search);
+            const langParam = urlParams.get('lang');
+            if (langParam && translations[langParam]) {
+                setLanguage(langParam);
+            } else {
+                setLanguage('en-US');
+            }
+
+            updateUI(currentZ);
+            initThree();
+        });
+
+    </script>
+</body>
+
+</html>

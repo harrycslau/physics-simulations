@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photoelectric Effect - Physics Simulations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+        }
+
+        canvas {
+            touch-action: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 text-slate-100 h-screen flex flex-col overflow-hidden relative">
+
+    <!-- Language Selector -->
+    <div class="absolute top-4 right-4 z-50">
+        <div class="flex bg-slate-800/80 backdrop-blur-sm rounded-full p-1 border border-slate-700 shadow-lg">
+            <button onclick="setLanguage('en-US')" id="btn-en"
+                class="px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md">EN</button>
+            <button onclick="setLanguage('zh-HK')" id="btn-zh"
+                class="px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700">繁</button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 p-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+            <div
+                class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-white tracking-tight" data-i18n="title">Photoelectric Effect</h1>
+                <p class="text-xs text-slate-400" data-i18n="subtitle">Interactive Physics Simulation</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+        <!-- Simulation Viewport -->
+        <div class="flex-1 relative bg-slate-950 flex flex-col">
+            <div
+                class="absolute top-4 left-4 z-10 bg-slate-900/80 backdrop-blur p-3 rounded-xl border border-slate-700 shadow-xl">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <span class="text-sm font-mono text-emerald-400" data-i18n="status_running">System Active</span>
+                </div>
+                <div class="font-mono text-2xl font-bold text-white tracking-wider" id="ammeter-display">0.00</div>
+                <div class="text-xs text-slate-500 uppercase tracking-widest mt-1" data-i18n="current_label">Current
+                    (μA)</div>
+            </div>
+
+            <canvas id="simCanvas" class="w-full h-full object-contain"></canvas>
+        </div>
+
+        <!-- Sidebar Controls -->
+        <aside class="w-96 bg-slate-900 border-l border-slate-800 flex flex-col overflow-y-auto z-20 shadow-2xl">
+            <div class="p-6 space-y-8">
+
+                <!-- Controls -->
+                <div class="space-y-6">
+                    <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                            </path>
+                        </svg>
+                        <span data-i18n="controls">Controls</span>
+                    </h2>
+
+                    <!-- Metal Selection -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-slate-300" data-i18n="target_metal">Target Metal</label>
+                        <select id="metalSelect"
+                            class="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 transition-colors">
+                            <!-- Options populated by JS -->
+                        </select>
+                    </div>
+
+                    <!-- Intensity -->
+                    <div class="space-y-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium text-slate-300" data-i18n="intensity">Intensity</label>
+                            <span id="intensityVal"
+                                class="text-xs font-mono bg-slate-700 px-2 py-1 rounded text-blue-300">0 %</span>
+                        </div>
+                        <input type="range" id="intensitySlider" min="0" max="100" value="0"
+                            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                    </div>
+
+                    <!-- Voltage -->
+                    <div class="space-y-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium text-slate-300" data-i18n="voltage">Voltage</label>
+                            <span id="voltageVal"
+                                class="text-xs font-mono bg-slate-700 px-2 py-1 rounded text-emerald-300">0.0 V</span>
+                        </div>
+                        <input type="range" id="voltageSlider" min="-5" max="5" step="0.1" value="0"
+                            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                    </div>
+
+                    <!-- Frequency -->
+                    <div class="space-y-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium text-slate-300" data-i18n="frequency">Frequency</label>
+                            <span id="freqVal"
+                                class="text-xs font-mono bg-slate-700 px-2 py-1 rounded text-purple-300">0 nm</span>
+                        </div>
+                        <div class="relative h-4 rounded-lg overflow-hidden mb-2">
+                            <div
+                                class="absolute inset-0 bg-gradient-to-r from-red-500 via-green-500 to-violet-500 opacity-80">
+                            </div>
+                        </div>
+                        <input type="range" id="freqSlider" min="300" max="1200" step="10" value="500"
+                            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                    </div>
+                </div>
+
+                <!-- Graphs -->
+                <div class="space-y-4">
+                    <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z">
+                            </path>
+                        </svg>
+                        <span data-i18n="graphs">Real-time Graphs</span>
+                    </h2>
+
+                    <div class="bg-slate-800 rounded-xl p-2 border border-slate-700 shadow-inner">
+                        <div class="text-xs text-center text-slate-500 mb-1" data-i18n="graph_iv">Current vs Voltage
+                        </div>
+                        <canvas id="graphVoltage" width="320" height="150" class="w-full h-auto"></canvas>
+                    </div>
+
+                    <div class="bg-slate-800 rounded-xl p-2 border border-slate-700 shadow-inner">
+                        <div class="text-xs text-center text-slate-500 mb-1" data-i18n="graph_if">Current vs Frequency
+                        </div>
+                        <canvas id="graphFrequency" width="320" height="150" class="w-full h-auto"></canvas>
+                    </div>
+
+                    <div class="bg-slate-800 rounded-xl p-2 border border-slate-700 shadow-inner">
+                        <div class="text-xs text-center text-slate-500 mb-1" data-i18n="graph_ii">Current vs Intensity
+                        </div>
+                        <canvas id="graphIntensity" width="320" height="150" class="w-full h-auto"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        // --- Internationalization ---
+        const translations = {
+            'en-US': {
+                title: "Photoelectric Effect",
+                subtitle: "Interactive Physics Simulation",
+                status_running: "System Active",
+                current_label: "Current (μA)",
+                controls: "Controls",
+                target_metal: "Target Metal",
+                intensity: "Light Intensity",
+                voltage: "Voltage",
+                frequency: "Frequency (Color)",
+                graphs: "Real-time Graphs",
+                graph_iv: "Current vs Voltage",
+                graph_if: "Current vs Frequency",
+                graph_ii: "Current vs Intensity",
+                metals: {
+                    sodium: "Sodium (2.28 eV)",
+                    zinc: "Zinc (4.33 eV)",
+                    copper: "Copper (4.70 eV)",
+                    platinum: "Platinum (6.35 eV)",
+                    unknown: "Unknown (3.00 eV)"
+                },
+                axes: {
+                    voltage: "Voltage (V)",
+                    current: "Current (I)",
+                    frequency: "Frequency (THz)",
+                    intensity: "Intensity (%)"
+                }
+            },
+            'zh-HK': {
+                title: "光電效應",
+                subtitle: "互動物理模擬",
+                status_running: "系統運行中",
+                current_label: "電流 (μA)",
+                controls: "控制面板",
+                target_metal: "目標金屬",
+                intensity: "光強度",
+                voltage: "電壓",
+                frequency: "頻率 (顏色)",
+                graphs: "實時圖表",
+                graph_iv: "電流 - 電壓",
+                graph_if: "電流 - 頻率",
+                graph_ii: "電流 - 光強度",
+                metals: {
+                    sodium: "鈉 (2.28 eV)",
+                    zinc: "鋅 (4.33 eV)",
+                    copper: "銅 (4.70 eV)",
+                    platinum: "鉑 (6.35 eV)",
+                    unknown: "未知 (3.00 eV)"
+                },
+                axes: {
+                    voltage: "電壓 (V)",
+                    current: "電流 (I)",
+                    frequency: "頻率 (THz)",
+                    intensity: "光強度 (%)"
+                }
+            }
+        };
+
+        let currentLang = 'en-US';
+
+        function setLanguage(lang) {
+            if (translations[lang]) {
+                currentLang = lang;
+                document.documentElement.lang = lang;
+
+                // Update URL
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('lang', lang);
+                window.history.pushState({}, '', newUrl);
+
+                if (window.updateSimulationUI) window.updateSimulationUI();
+                updateLanguageUI();
+            }
+        }
+
+        function updateLanguageUI() {
+            // Update Buttons
+            const btnEn = document.getElementById('btn-en');
+            const btnZh = document.getElementById('btn-zh');
+
+            if (currentLang === 'en-US') {
+                btnEn.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md";
+                btnZh.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700";
+            } else {
+                btnZh.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md";
+                btnEn.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700";
+            }
+
+            // Update Text Content
+            document.title = translations[currentLang].title + " - Physics Simulations";
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+
+            // Update Metal Options
+            const metalSelect = document.getElementById('metalSelect');
+            const selectedValue = metalSelect.value;
+            metalSelect.innerHTML = '';
+            const metals = [
+                { id: '2.28', key: 'sodium' },
+                { id: '4.33', key: 'zinc' },
+                { id: '4.70', key: 'copper' },
+                { id: '6.35', key: 'platinum' },
+                { id: '3.00', key: 'unknown' }
+            ];
+
+            metals.forEach(m => {
+                const option = document.createElement('option');
+                option.value = m.id;
+                option.textContent = translations[currentLang].metals[m.key];
+                metalSelect.appendChild(option);
+            });
+            const selectedExists = metals.some(m => m.id === selectedValue);
+            metalSelect.value = selectedExists ? selectedValue : metals[0].id;
+        }
+
+        // --- Simulation Logic ---
+        (function () {
+            // Constants
+            const H_THZ = 0.0041357; // Planck's constant in eV/THz
+            const C = 300; // Speed of light (scaled)
+
+            // State
+            const state = {
+                workFunction: 2.28,
+                intensity: 0,
+                voltage: 0,
+                frequency: 500, // THz
+                electrons: []
+            };
+
+            // Elements
+            const els = {
+                canvas: document.getElementById('simCanvas'),
+                ctx: document.getElementById('simCanvas').getContext('2d'),
+                metalSelect: document.getElementById('metalSelect'),
+                intensitySlider: document.getElementById('intensitySlider'),
+                voltageSlider: document.getElementById('voltageSlider'),
+                freqSlider: document.getElementById('freqSlider'),
+                intensityVal: document.getElementById('intensityVal'),
+                voltageVal: document.getElementById('voltageVal'),
+                freqVal: document.getElementById('freqVal'),
+                ammeter: document.getElementById('ammeter-display'),
+                graphs: {
+                    voltage: document.getElementById('graphVoltage').getContext('2d'),
+                    frequency: document.getElementById('graphFrequency').getContext('2d'),
+                    intensity: document.getElementById('graphIntensity').getContext('2d')
+                }
+            };
+
+            // Resize Canvas
+            let width, height;
+            function resize() {
+                const parent = els.canvas.parentElement;
+                width = parent.clientWidth;
+                height = parent.clientHeight;
+                els.canvas.width = width;
+                els.canvas.height = height;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            // Physics Helpers
+            function getPhysics(freq, voltage, workFunc) {
+                const photonEnergy = H_THZ * freq; // eV
+                const maxKE = photonEnergy - workFunc; // eV
+                const stoppingPotential = -maxKE; // V (negative value)
+                const hasEmission = maxKE > 0;
+                return { photonEnergy, maxKE, stoppingPotential, hasEmission };
+            }
+
+            function wavelengthToColor(freqTHz) {
+                // Approx mapping: 400THz (750nm) to 790THz (380nm)
+                // Visible range: ~400-790 THz
+                // UV > 790, IR < 400
+                if (freqTHz < 400) return 'rgba(200, 50, 50, 0.5)'; // IR-ish
+                if (freqTHz > 790) return 'rgba(100, 50, 200, 0.5)'; // UV-ish
+
+                // Simple rainbow mapping
+                const hue = 270 - ((freqTHz - 400) / (790 - 400)) * 270;
+                return `hsla(${hue}, 100%, 50%, 0.5)`;
+            }
+
+            // Simulation Loop
+            function updateParticles() {
+                // Emission
+                const phys = getPhysics(state.frequency, state.voltage, state.workFunction);
+
+                if (phys.hasEmission && state.intensity > 0) {
+                    // Emission rate depends on intensity
+                    const emissionChance = state.intensity / 1000;
+                    if (Math.random() < emissionChance) {
+                        state.electrons.push({
+                            x: 50, // Emitter plate position
+                            y: 100 + Math.random() * (height - 200),
+                            vx: Math.sqrt(phys.maxKE) * 2, // Simplified velocity
+                            vy: (Math.random() - 0.5) * 1,
+                            active: true
+                        });
+                    }
+                }
+
+                // Movement
+                // Electric field E = V / d
+                // Force F = qE (q is negative)
+                // If V is positive (anode +), electrons accelerate towards it.
+                // If V is negative (anode -), electrons decelerate.
+
+                const d = width - 100; // Distance between plates
+                const accel = (state.voltage * 0.1); // Simplified acceleration factor
+
+                for (let i = state.electrons.length - 1; i >= 0; i--) {
+                    const e = state.electrons[i];
+
+                    e.vx += accel;
+                    e.x += e.vx;
+                    e.y += e.vy;
+
+                    // Collision with Collector (Right Plate)
+                    if (e.x > width - 50) {
+                        e.active = false;
+                        state.electrons.splice(i, 1);
+                        // Count current? handled by theoretical model for smoothness
+                    }
+                    // Reversal or Hit Emitter (Left Plate)
+                    else if (e.x < 50) {
+                        e.active = false;
+                        state.electrons.splice(i, 1);
+                    }
+                }
+            }
+
+            function drawSimulation() {
+                const ctx = els.ctx;
+                ctx.clearRect(0, 0, width, height);
+
+                // Draw Plates
+                ctx.fillStyle = "#94a3b8";
+                ctx.fillRect(40, 50, 10, height - 100); // Emitter
+                ctx.fillRect(width - 50, 50, 10, height - 100); // Collector
+
+                // Draw Light Source
+                const lightColor = wavelengthToColor(state.frequency);
+                ctx.fillStyle = lightColor;
+
+                if (state.intensity > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(50, 100);
+                    ctx.lineTo(50, height - 100);
+                    ctx.lineTo(0, height);
+                    ctx.fill();
+                }
+
+                // Draw Electrons
+                ctx.fillStyle = "#38bdf8"; // Cyan-400
+                state.electrons.forEach(e => {
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            function calculateCurrent() {
+                const phys = getPhysics(state.frequency, state.voltage, state.workFunction);
+                if (!phys.hasEmission) return 0;
+
+                // If V > Stopping Potential, we get current
+                // Current scales with Intensity
+                // Curve shape:
+                // V > 0: Saturation (I ~ Intensity)
+                // Vs < V < 0: Transition
+                // V < Vs: 0
+
+                if (state.voltage >= 0) {
+                    return state.intensity;
+                } else if (state.voltage < phys.stoppingPotential) {
+                    return 0;
+                } else {
+                    // Simple sqrt curve for transition
+                    const range = 0 - phys.stoppingPotential;
+                    const dist = state.voltage - phys.stoppingPotential;
+                    return state.intensity * Math.sqrt(dist / range);
+                }
+            }
+
+            function drawGraph(ctx, type) {
+                const w = ctx.canvas.width;
+                const h = ctx.canvas.height;
+                ctx.clearRect(0, 0, w, h);
+
+                // Grid
+                ctx.strokeStyle = "#334155";
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(30, 10); ctx.lineTo(30, h - 20); ctx.lineTo(w - 10, h - 20);
+                ctx.stroke();
+
+                // Labels
+                ctx.fillStyle = "#64748b";
+                ctx.font = "10px Inter";
+                ctx.textAlign = "center";
+
+                const labels = translations[currentLang].axes;
+
+                if (type === 'voltage') {
+                    ctx.fillText(labels.voltage, w / 2, h - 5);
+                    ctx.save(); ctx.translate(10, h / 2); ctx.rotate(-Math.PI / 2);
+                    ctx.fillText(labels.current, 0, 0); ctx.restore();
+                } else if (type === 'frequency') {
+                    ctx.fillText(labels.frequency, w / 2, h - 5);
+                    ctx.save(); ctx.translate(10, h / 2); ctx.rotate(-Math.PI / 2);
+                    ctx.fillText(labels.current, 0, 0); ctx.restore();
+                } else if (type === 'intensity') {
+                    ctx.fillText(labels.intensity, w / 2, h - 5);
+                    ctx.save(); ctx.translate(10, h / 2); ctx.rotate(-Math.PI / 2);
+                    ctx.fillText(labels.current, 0, 0); ctx.restore();
+                }
+
+                // Plot Data (Theoretical Curves)
+                ctx.strokeStyle = "#3b82f6";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                const phys = getPhysics(state.frequency, state.voltage, state.workFunction);
+                const currI = calculateCurrent();
+
+                if (type === 'voltage') {
+                    // Plot I vs V (-5 to 5)
+                    const gw = w - 40;
+                    const gh = h - 30;
+                    const x0 = 30;
+                    const y0 = h - 20;
+
+                    for (let px = 0; px <= gw; px++) {
+                        const v = ((px / gw) * 10) - 5; // -5 to 5
+
+                        let iVal = 0;
+                        // Recalculate physics for this V (freq/workFunc constant)
+                        // Actually stopping potential is constant for fixed freq
+                        if (phys.hasEmission) {
+                            if (v >= 0) iVal = state.intensity;
+                            else if (v < phys.stoppingPotential) iVal = 0;
+                            else {
+                                const range = 0 - phys.stoppingPotential;
+                                const dist = v - phys.stoppingPotential;
+                                iVal = state.intensity * Math.sqrt(dist / range);
+                            }
+                        }
+
+                        const py = y0 - (iVal / 100) * gh;
+                        if (px === 0) ctx.moveTo(x0 + px, py);
+                        else ctx.lineTo(x0 + px, py);
+                    }
+                    ctx.stroke();
+
+                    // Current Point
+                    const pointX = x0 + ((state.voltage + 5) / 10) * gw;
+                    const pointY = y0 - (currI / 100) * gh;
+                    ctx.fillStyle = "#ef4444";
+                    ctx.beginPath(); ctx.arc(pointX, pointY, 4, 0, Math.PI * 2); ctx.fill();
+
+                } else if (type === 'frequency') {
+                    // Plot I vs F (300 to 1200)
+                    const gw = w - 40;
+                    const gh = h - 30;
+                    const x0 = 30;
+                    const y0 = h - 20;
+
+                    for (let px = 0; px <= gw; px++) {
+                        const f = 300 + (px / gw) * 900;
+
+                        // Recalculate physics for this F
+                        const p = getPhysics(f, state.voltage, state.workFunction);
+                        let iVal = 0;
+                        if (p.hasEmission) {
+                            // Check if V allows current
+                            if (state.voltage >= 0) iVal = state.intensity;
+                            else if (state.voltage < p.stoppingPotential) iVal = 0;
+                            else {
+                                const range = 0 - p.stoppingPotential;
+                                const dist = state.voltage - p.stoppingPotential;
+                                iVal = state.intensity * Math.sqrt(dist / range);
+                            }
+                        }
+
+                        const py = y0 - (iVal / 100) * gh;
+                        if (px === 0) ctx.moveTo(x0 + px, py);
+                        else ctx.lineTo(x0 + px, py);
+                    }
+                    ctx.stroke();
+
+                    // Current Point
+                    const pointX = x0 + ((state.frequency - 300) / 900) * gw;
+                    const pointY = y0 - (currI / 100) * gh;
+                    ctx.fillStyle = "#ef4444";
+                    ctx.beginPath(); ctx.arc(pointX, pointY, 4, 0, Math.PI * 2); ctx.fill();
+
+                } else if (type === 'intensity') {
+                    // Plot I vs Intensity (0 to 100)
+                    const gw = w - 40;
+                    const gh = h - 30;
+                    const x0 = 30;
+                    const y0 = h - 20;
+
+                    // Line is straight
+                    // Slope depends on V and F
+                    let slope = 0;
+                    if (phys.hasEmission) {
+                        if (state.voltage >= 0) slope = 1;
+                        else if (state.voltage < phys.stoppingPotential) slope = 0;
+                        else {
+                            const range = 0 - phys.stoppingPotential;
+                            const dist = state.voltage - phys.stoppingPotential;
+                            slope = Math.sqrt(dist / range);
+                        }
+                    }
+
+                    ctx.beginPath();
+                    ctx.moveTo(x0, y0);
+                    ctx.lineTo(x0 + gw, y0 - (100 * slope / 100) * gh);
+                    ctx.stroke();
+
+                    // Current Point
+                    const pointX = x0 + (state.intensity / 100) * gw;
+                    const pointY = y0 - (currI / 100) * gh;
+                    ctx.fillStyle = "#ef4444";
+                    ctx.beginPath(); ctx.arc(pointX, pointY, 4, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+
+            function updateUI() {
+                // Update Labels
+                els.intensityVal.innerText = state.intensity + " %";
+                els.voltageVal.innerText = state.voltage.toFixed(1) + " V";
+                els.freqVal.innerText = state.frequency + " THz";
+
+                // Update Meter
+                const current = calculateCurrent();
+                els.ammeter.innerText = current.toFixed(2);
+
+                // Update Graphs
+                drawGraph(els.graphs.voltage, 'voltage');
+                drawGraph(els.graphs.frequency, 'frequency');
+                drawGraph(els.graphs.intensity, 'intensity');
+            }
+            window.updateSimulationUI = updateUI;
+
+            // Event Listeners
+            els.metalSelect.addEventListener('change', e => {
+                state.workFunction = parseFloat(e.target.value);
+                updateUI();
+            });
+            els.intensitySlider.addEventListener('input', e => {
+                state.intensity = parseInt(e.target.value);
+                updateUI();
+            });
+            els.voltageSlider.addEventListener('input', e => {
+                state.voltage = parseFloat(e.target.value);
+                updateUI();
+            });
+            els.freqSlider.addEventListener('input', e => {
+                state.frequency = parseInt(e.target.value);
+                updateUI();
+            });
+
+            // Loop
+            function loop() {
+                updateParticles();
+                drawSimulation();
+                requestAnimationFrame(loop);
+            }
+
+            // Init
+            const urlParams = new URLSearchParams(window.location.search);
+            const langParam = urlParams.get('lang');
+            if (langParam && translations[langParam]) {
+                setLanguage(langParam);
+            } else {
+                setLanguage('en-US');
+            }
+
+            loop();
+
+        })();
+    </script>
+</body>
+
+</html>

@@ -174,5 +174,115 @@
         "screenshotUrl": "screenshots/snells-law.png",
         "createdAt": "2025-11-21",
         "updatedAt": "2025-11-21"
+    },
+    {
+        "id": "photoelectric-effect",
+        "category": {
+            "en-US": "Quantum Physics",
+            "zh-HK": "量子物理"
+        },
+        "title": {
+            "en-US": "Photoelectric Effect",
+            "zh-HK": "光電效應"
+        },
+        "description": {
+            "en-US": "Explore how light knocks electrons off a metal surface.",
+            "zh-HK": "探索光線如何將電子從金屬表面擊出。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/quantum-physics/photoelectric-effect.html",
+        "screenshotUrl": "screenshots/default.png",
+        "createdAt": "2025-11-22",
+        "updatedAt": "2025-11-22"
+    },
+    {
+        "id": "atomic-orbital",
+        "category": {
+            "en-US": "Chemistry",
+            "zh-HK": "化學"
+        },
+        "title": {
+            "en-US": "Atomic Orbitals",
+            "zh-HK": "原子軌域"
+        },
+        "description": {
+            "en-US": "Visualize the shapes of s, p, and d orbitals in 3D.",
+            "zh-HK": "以 3D 方式可視化 s、p 和 d 軌域的形狀。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/chemistry/atomic-orbital.html",
+        "screenshotUrl": "screenshots/default.png",
+        "createdAt": "2025-11-22",
+        "updatedAt": "2025-11-22"
+    },
+    {
+        "id": "plant-cell",
+        "category": {
+            "en-US": "Biology",
+            "zh-HK": "生物"
+        },
+        "title": {
+            "en-US": "Plant Cell Structure",
+            "zh-HK": "植物細胞構造"
+        },
+        "description": {
+            "en-US": "Interactive diagram of a plant cell and its organelles.",
+            "zh-HK": "植物細胞及其細胞器的互動圖解。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/biology/plant-cell.html",
+        "screenshotUrl": "screenshots/default.png",
+        "createdAt": "2025-11-22",
+        "updatedAt": "2025-11-22"
+    },
+    {
+        "id": "newton-2nd-law",
+        "category": {
+            "en-US": "Force and Motion",
+            "zh-HK": "力與運動"
+        },
+        "title": {
+            "en-US": "Newton's 2nd Law",
+            "zh-HK": "牛頓第二定律"
+        },
+        "description": {
+            "en-US": "Simulate F=ma with a cart and hanging mass system.",
+            "zh-HK": "利用滑車和懸掛質量系統模擬 F=ma。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/force-and-motion/newton-2nd-law.html",
+        "screenshotUrl": "screenshots/default.png",
+        "createdAt": "2025-11-22",
+        "updatedAt": "2025-11-22"
+    },
+    {
+        "id": "acrobat-game",
+        "category": {
+            "en-US": "Force and Motion",
+            "zh-HK": "力與運動"
+        },
+        "title": {
+            "en-US": "Acrobat Physics",
+            "zh-HK": "雜技演員物理"
+        },
+        "description": {
+            "en-US": "Learn about pendulum motion and projectile physics.",
+            "zh-HK": "學習單擺運動和拋體物理。"
+        },
+        "contributors": [
+            "Bryan Leung"
+        ],
+        "simulationUrl": "simulations/force-and-motion/acrobat-game.html",
+        "screenshotUrl": "screenshots/default.png",
+        "createdAt": "2025-11-22",
+        "updatedAt": "2025-11-22"
     }
 ]

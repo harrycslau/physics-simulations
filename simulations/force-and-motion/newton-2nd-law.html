@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton's 2nd Law Simulation (With Friction)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --accent-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --danger-color: #f44336;
+            --warning-color: #FFC107;
+            --panel-bg: #2d2d2d;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Language Selector */
+        .lang-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 50;
+            display: flex;
+            background: rgba(45, 45, 45, 0.8);
+            backdrop-filter: blur(4px);
+            border-radius: 9999px;
+            padding: 4px;
+            border: 1px solid #444;
+        }
+
+        .lang-btn {
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 9999px;
+            transition: all 0.3s;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .lang-btn.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .lang-btn:hover:not(.active) {
+            color: white;
+            background-color: #444;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            background-color: var(--panel-bg);
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        p {
+            margin: 5px 0 0;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .main-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Canvas Container */
+        .canvas-wrapper {
+            flex: 2;
+            min-width: 300px;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #444;
+            height: 450px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Controls & Data */
+        .sidebar {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-panel,
+        .data-panel {
+            background-color: var(--panel-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .value-display {
+            float: right;
+            color: var(--secondary-color);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        #startBtn {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        #resetBtn {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #444;
+        }
+
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .formula-box {
+            background-color: #333;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            text-align: center;
+            border-left: 4px solid var(--secondary-color);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Graph Container */
+        .graph-container {
+            width: 100%;
+            height: 150px;
+            background-color: #000;
+            border: 1px solid #444;
+            border-radius: 4px;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .graph-label {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 0.8rem;
+            color: #aaa;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .canvas-wrapper {
+                height: 300px;
+            }
+
+            .main-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Language Selector -->
+    <div class="lang-selector">
+        <div onclick="setLanguage('en-US')" id="btn-en" class="lang-btn active">EN</div>
+        <div onclick="setLanguage('zh-HK')" id="btn-zh" class="lang-btn">繁</div>
+    </div>
+
+    <header>
+        <h1 data-i18n="title">Newton's 2nd Law: F = ma</h1>
+        <p data-i18n="subtitle">Adjust masses and friction to see the effect on acceleration</p>
+    </header>
+
+    <div class="main-container">
+        <!-- Animation Area -->
+        <div class="canvas-wrapper">
+            <canvas id="simCanvas"></canvas>
+        </div>
+
+        <!-- Controls and Stats -->
+        <div class="sidebar">
+            <div class="control-panel">
+                <div class="control-group">
+                    <label><span data-i18n="label_M">Cart Mass (M)</span> <span id="val-M" class="value-display">1.0
+                            kg</span></label>
+                    <input type="range" id="input-M" min="0.5" max="5.0" step="0.1" value="1.0">
+                </div>
+                <div class="control-group">
+                    <label><span data-i18n="label_m">Hanging Mass (m)</span> <span id="val-m" class="value-display">0.2
+                            kg</span></label>
+                    <input type="range" id="input-m" min="0.1" max="2.0" step="0.1" value="0.2">
+                </div>
+                <div class="control-group">
+                    <label><span data-i18n="label_mu">Friction Coeff (μ)</span> <span id="val-mu"
+                            class="value-display">0.00</span></label>
+                    <input type="range" id="input-mu" min="0.0" max="0.5" step="0.01" value="0.0">
+                </div>
+                <div class="button-group">
+                    <button id="startBtn" data-i18n="btn_start">Start</button>
+                    <button id="resetBtn" data-i18n="btn_reset">Reset</button>
+                </div>
+            </div>
+
+            <div class="data-panel">
+                <div class="formula-box">
+                    F<sub>net</sub> = (m·g) - (μ·M·g)<br>
+                    a = F<sub>net</sub> / (M + m)
+                </div>
+                <div class="data-row">
+                    <span data-i18n="label_drive">Driving Force (mg):</span>
+                    <span id="out-driveForce">0.00 N</span>
+                </div>
+                <div class="data-row">
+                    <span data-i18n="label_fric">Friction Force (f):</span>
+                    <span id="out-fricForce" style="color: var(--warning-color);">0.00 N</span>
+                </div>
+                <div class="data-row">
+                    <span data-i18n="label_net">Net Force:</span>
+                    <span id="out-netForce">0.00 N</span>
+                </div>
+                <div class="data-row">
+                    <span data-i18n="label_acc">Acceleration (a):</span>
+                    <span id="out-acc">0.00 m/s²</span>
+                </div>
+                <div class="data-row">
+                    <span data-i18n="label_vel">Velocity (v):</span>
+                    <span id="out-vel">0.00 m/s</span>
+                </div>
+
+                <!-- Mini Graph -->
+                <div class="graph-container">
+                    <span class="graph-label" data-i18n="graph_title">Velocity vs Time</span>
+                    <canvas id="graphCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- I18N ---
+        const translations = {
+            'en-US': {
+                title: "Newton's 2nd Law: F = ma",
+                subtitle: "Adjust masses and friction to see the effect on acceleration",
+                label_M: "Cart Mass (M)",
+                label_m: "Hanging Mass (m)",
+                label_mu: "Friction Coeff (μ)",
+                btn_start: "Start",
+                btn_pause: "Pause",
+                btn_restart: "Restart",
+                btn_reset: "Reset",
+                label_drive: "Driving Force (mg):",
+                label_fric: "Friction Force (f):",
+                label_net: "Net Force:",
+                label_acc: "Acceleration (a):",
+                label_vel: "Velocity (v):",
+                graph_title: "Velocity vs Time"
+            },
+            'zh-HK': {
+                title: "牛頓第二定律：F = ma",
+                subtitle: "調整質量和摩擦力以觀察對加速度的影響",
+                label_M: "滑車質量 (M)",
+                label_m: "懸掛質量 (m)",
+                label_mu: "摩擦係數 (μ)",
+                btn_start: "開始",
+                btn_pause: "暫停",
+                btn_restart: "重新開始",
+                btn_reset: "重置",
+                label_drive: "驅動力 (mg):",
+                label_fric: "摩擦力 (f):",
+                label_net: "淨力:",
+                label_acc: "加速度 (a):",
+                label_vel: "速度 (v):",
+                graph_title: "速度 vs 時間"
+            }
+        };
+
+        let currentLang = 'en-US';
+
+        function setLanguage(lang) {
+            if (translations[lang]) {
+                currentLang = lang;
+                document.documentElement.lang = lang;
+
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('lang', lang);
+                window.history.pushState({}, '', newUrl);
+
+                updateLanguageUI();
+                updateButtonText(); // Refresh button text based on state
+            }
+        }
+
+        function updateLanguageUI() {
+            const btnEn = document.getElementById('btn-en');
+            const btnZh = document.getElementById('btn-zh');
+
+            if (currentLang === 'en-US') {
+                btnEn.classList.add('active');
+                btnZh.classList.remove('active');
+            } else {
+                btnZh.classList.add('active');
+                btnEn.classList.remove('active');
+            }
+
+            document.title = translations[currentLang].title;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                // Skip button text here as it's dynamic
+                if (translations[currentLang][key] && el.id !== 'startBtn') {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+        }
+
+        // --- Configuration & State ---
+        const simCanvas = document.getElementById('simCanvas');
+        const simCtx = simCanvas.getContext('2d');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+
+        // Physics Constants
+        const g = 9.81; // m/s^2
+        const pixelsPerMeter = 100; // Scale factor
+
+        // State Variables
+        let cartMass = 1.0;
+        let hangingMass = 0.2;
+        let frictionCoef = 0.0;
+        let isRunning = false;
+        let isFinished = false; // Track if simulation finished (hit pulley)
+        let time = 0;
+        let velocity = 0;
+        let positionX = 0; // Position of cart in meters
+        let acceleration = 0;
+        let lastFrameTime = 0;
+        let animationId;
+
+        // Graph Data
+        let velocityHistory = []; // Array of {t, v}
+
+        // UI Elements
+        const inputM = document.getElementById('input-M');
+        const inputm = document.getElementById('input-m');
+        const inputMu = document.getElementById('input-mu');
+        const valM = document.getElementById('val-M');
+        const valm = document.getElementById('val-m');
+        const valMu = document.getElementById('val-mu');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Output Elements
+        const outDriveForce = document.getElementById('out-driveForce');
+        const outFricForce = document.getElementById('out-fricForce');
+        const outNetForce = document.getElementById('out-netForce');
+        const outAcc = document.getElementById('out-acc');
+        const outVel = document.getElementById('out-vel');
+
+        // Layout Constants (Calculated in resize)
+        let layout = {
+            groundY: 0,
+            pulleyX: 0,
+            pulleyRadius: 25,
+            cartWidth: 100,
+            cartHeight: 50,
+            startX: 0
+        };
+
+        // --- Initialization ---
+        function resizeCanvases() {
+            simCanvas.width = simCanvas.parentElement.clientWidth;
+            simCanvas.height = simCanvas.parentElement.clientHeight;
+            graphCanvas.width = graphCanvas.parentElement.clientWidth;
+            graphCanvas.height = graphCanvas.parentElement.clientHeight;
+
+            // Update Layout Constants based on new size
+            layout.groundY = simCanvas.height * 0.6;
+            layout.pulleyX = simCanvas.width * 0.85;
+            layout.startX = simCanvas.width * 0.1;
+
+            draw(); // Redraw immediately
+        }
+        window.addEventListener('resize', resizeCanvases);
+
+        // --- Physics Engine ---
+        function updatePhysics(dt) {
+            if (!isRunning) return;
+
+            // Forces
+            const drivingForce = hangingMass * g;
+            const normalForce = cartMass * g;
+            const frictionForce = frictionCoef * normalForce;
+
+            // Net Force
+            let netForce = drivingForce - frictionForce;
+
+            // If friction is stronger than driving force and we aren't moving, we stay still
+            if (netForce <= 0 && velocity === 0) {
+                netForce = 0;
+                acceleration = 0;
+            } else {
+                // Newton's 2nd Law: a = F_net / m_total
+                const totalMass = cartMass + hangingMass;
+                acceleration = netForce / totalMass;
+            }
+
+            // Kinematics
+            velocity += acceleration * dt;
+            // Friction shouldn't cause negative velocity if starting from rest (simple model)
+            if (velocity < 0) velocity = 0;
+
+            positionX += velocity * dt;
+            time += dt;
+
+            // Graph Data
+            if (time * 60 % 5 < 1) {
+                velocityHistory.push({ t: time, v: velocity });
+            }
+
+            // --- Collision Detection (Stop at Pulley) ---
+            // Calculate current pixel positions
+            const currentCartPixelX = layout.startX + (positionX * pixelsPerMeter);
+            const cartRightEdge = currentCartPixelX + layout.cartWidth;
+            const pulleyLeftEdge = layout.pulleyX - layout.pulleyRadius; // Bumper position
+
+            // Check if cart hit the pulley bumper
+            if (cartRightEdge >= pulleyLeftEdge) {
+                // Snap to collision point
+                const maxPixels = pulleyLeftEdge - layout.cartWidth - layout.startX;
+                positionX = maxPixels / pixelsPerMeter;
+
+                velocity = 0;
+                acceleration = 0;
+                isRunning = false;
+                isFinished = true;
+                updateButtonText();
+            }
+
+            updateUIValues(drivingForce, frictionForce, netForce);
+        }
+
+        // --- Rendering ---
+        function draw() {
+            simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+
+            const { groundY, pulleyX, pulleyRadius, cartWidth, cartHeight, startX } = layout;
+
+            // Current Positions
+            const currentCartPixelX = startX + (positionX * pixelsPerMeter);
+            // Hanging mass drops as cart moves right
+            const stringLengthVerticalStart = 60;
+            const currentHangingPixelY = (groundY) + stringLengthVerticalStart + (positionX * pixelsPerMeter);
+
+            // 1. Draw Table/Track
+            simCtx.fillStyle = '#555';
+            simCtx.fillRect(0, groundY, pulleyX, 10);
+            // Legs
+            simCtx.fillStyle = '#333';
+            simCtx.fillRect(startX, groundY + 10, 20, simCanvas.height - groundY);
+            simCtx.fillRect(pulleyX - 40, groundY + 10, 20, simCanvas.height - groundY);
+
+            // 2. Draw Pulley
+            // The pulley axle is at (pulleyX, groundY - pulleyRadius)
+            // The top of the pulley is at groundY - 2*pulleyRadius
+            const pulleyCenterY = groundY - pulleyRadius;
+
+            simCtx.beginPath();
+            simCtx.arc(pulleyX, pulleyCenterY, pulleyRadius, 0, Math.PI * 2);
+            simCtx.fillStyle = '#888';
+            simCtx.fill();
+            simCtx.strokeStyle = '#ccc';
+            simCtx.lineWidth = 2;
+            simCtx.stroke();
+
+            // Pulley Spokes
+            simCtx.beginPath();
+            simCtx.moveTo(pulleyX, pulleyCenterY);
+            const angle = positionX * 5;
+            simCtx.lineTo(pulleyX + Math.cos(angle) * pulleyRadius, pulleyCenterY + Math.sin(angle) * pulleyRadius);
+            simCtx.stroke();
+
+            // 3. Draw String (Horizontal Requirement)
+            // String Top Y must match Pulley Top Tangent
+            const stringY = pulleyCenterY - pulleyRadius;
+
+            simCtx.strokeStyle = '#fff';
+            simCtx.lineWidth = 2;
+            simCtx.beginPath();
+
+            // Horizontal part: From Cart Front to Pulley Top
+            // To make it horizontal, it must attach to the cart at stringY
+            // Cart is sitting on groundY. 
+            // So attachment height relative to cart bottom is (groundY - stringY) = 2*radius
+            simCtx.moveTo(currentCartPixelX + cartWidth, stringY);
+            simCtx.lineTo(pulleyX, stringY);
+
+            // Vertical part
+            simCtx.lineTo(pulleyX + pulleyRadius, stringY + pulleyRadius); // arc approximation
+            simCtx.moveTo(pulleyX + pulleyRadius, pulleyCenterY);
+            simCtx.lineTo(pulleyX + pulleyRadius, currentHangingPixelY);
+            simCtx.stroke();
+
+            // 4. Draw Cart
+            simCtx.fillStyle = '#2196F3';
+            simCtx.fillRect(currentCartPixelX, groundY - cartHeight - 2, cartWidth, cartHeight);
+
+            // Wheels
+            simCtx.fillStyle = '#000';
+            simCtx.beginPath();
+            simCtx.arc(currentCartPixelX + 20, groundY - 2, 8, 0, Math.PI * 2);
+            simCtx.arc(currentCartPixelX + cartWidth - 20, groundY - 2, 8, 0, Math.PI * 2);
+            simCtx.fill();
+
+            // String Attachment Point on Cart (Visual aid for horizontal string)
+            simCtx.fillStyle = '#aaa';
+            simCtx.fillRect(currentCartPixelX + cartWidth - 5, stringY - 5, 5, 10);
+
+            // Label M
+            simCtx.fillStyle = '#fff';
+            simCtx.font = '16px Arial';
+            simCtx.fillText(`M`, currentCartPixelX + 10, groundY - cartHeight / 2 + 5);
+
+            // 5. Draw Hanging Mass
+            const massSize = 20 + (hangingMass * 10);
+            simCtx.fillStyle = '#f44336';
+            simCtx.fillRect(pulleyX + pulleyRadius - massSize / 2, currentHangingPixelY, massSize, massSize);
+            simCtx.fillStyle = '#fff';
+            simCtx.font = '12px Arial';
+            simCtx.fillText(`m`, pulleyX + pulleyRadius - 5, currentHangingPixelY + massSize / 2 + 4);
+
+            // 6. Draw Vectors
+            if (isRunning || positionX > 0 || acceleration > 0) {
+                // Acceleration (Green)
+                if (acceleration > 0) {
+                    drawArrow(simCtx,
+                        currentCartPixelX + cartWidth / 2, groundY - cartHeight - 25,
+                        currentCartPixelX + cartWidth / 2 + (acceleration * 20), groundY - cartHeight - 25,
+                        '#4CAF50', 'a');
+                }
+
+                // Tension/Driving Force (Yellow)
+                drawArrow(simCtx,
+                    currentCartPixelX + cartWidth, stringY,
+                    currentCartPixelX + cartWidth + 40, stringY,
+                    '#FFC107', 'T');
+
+                // Friction Force (Red) - Only if friction exists
+                if (frictionCoef > 0) {
+                    const fricLen = Math.min(60, (frictionCoef * cartMass * g) * 5); // Scale for visibility
+                    drawArrow(simCtx,
+                        currentCartPixelX, groundY - 10,
+                        currentCartPixelX - fricLen, groundY - 10,
+                        '#f44336', 'f');
+                }
+            }
+
+            drawGraph();
+        }
+
+        function drawArrow(ctx, x1, y1, x2, y2, color, label) {
+            const headlen = 10;
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const angle = Math.atan2(dy, dx);
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 3;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.fill();
+
+            ctx.font = '14px Arial';
+            ctx.fillText(label, x2 + (dx > 0 ? 5 : -15), y2 - 5);
+        }
+
+        function drawGraph() {
+            const w = graphCanvas.width;
+            const h = graphCanvas.height;
+            graphCtx.clearRect(0, 0, w, h);
+
+            // Axes
+            graphCtx.strokeStyle = '#444';
+            graphCtx.lineWidth = 1;
+            graphCtx.beginPath();
+            graphCtx.moveTo(30, 10);
+            graphCtx.lineTo(30, h - 20);
+            graphCtx.lineTo(w - 10, h - 20);
+            graphCtx.stroke();
+
+            if (velocityHistory.length < 2) return;
+
+            const maxT = Math.max(5, time * 1.2);
+            const maxV = Math.max(5, velocity * 1.2);
+
+            graphCtx.strokeStyle = '#2196F3';
+            graphCtx.lineWidth = 2;
+            graphCtx.beginPath();
+
+            velocityHistory.forEach((point, index) => {
+                const x = 30 + (point.t / maxT) * (w - 40);
+                const y = (h - 20) - (point.v / maxV) * (h - 30);
+                if (index === 0) graphCtx.moveTo(x, y);
+                else graphCtx.lineTo(x, y);
+            });
+            graphCtx.stroke();
+        }
+
+        function updateUIValues(driveF, fricF, netF) {
+            // If arguments aren't provided (e.g. reset), calculate them
+            if (driveF === undefined) {
+                driveF = hangingMass * g;
+                fricF = frictionCoef * cartMass * g;
+                netF = Math.max(0, driveF - fricF);
+                const totalMass = cartMass + hangingMass;
+                acceleration = netF / totalMass;
+            }
+
+            outDriveForce.textContent = driveF.toFixed(2) + " N";
+            outFricForce.textContent = fricF.toFixed(2) + " N";
+            outNetForce.textContent = netF.toFixed(2) + " N";
+            outAcc.textContent = acceleration.toFixed(2) + " m/s²";
+            outVel.textContent = velocity.toFixed(2) + " m/s";
+        }
+
+        function updateButtonText() {
+            if (isFinished) {
+                startBtn.textContent = translations[currentLang].btn_restart;
+            } else if (isRunning) {
+                startBtn.textContent = translations[currentLang].btn_pause;
+            } else {
+                startBtn.textContent = translations[currentLang].btn_start;
+            }
+        }
+
+        // --- Loop ---
+        function loop(timestamp) {
+            if (!lastFrameTime) lastFrameTime = timestamp;
+            const dt = (timestamp - lastFrameTime) / 1000;
+            lastFrameTime = timestamp;
+
+            if (dt < 0.1) updatePhysics(dt);
+            draw();
+            animationId = requestAnimationFrame(loop);
+        }
+
+        // --- Event Listeners ---
+        inputM.addEventListener('input', (e) => {
+            cartMass = parseFloat(e.target.value);
+            valM.textContent = cartMass.toFixed(1) + " kg";
+            reset();
+        });
+
+        inputm.addEventListener('input', (e) => {
+            hangingMass = parseFloat(e.target.value);
+            valm.textContent = hangingMass.toFixed(1) + " kg";
+            reset();
+        });
+
+        inputMu.addEventListener('input', (e) => {
+            frictionCoef = parseFloat(e.target.value);
+            valMu.textContent = frictionCoef.toFixed(2);
+            reset();
+        });
+
+        startBtn.addEventListener('click', () => {
+            if (isFinished) {
+                reset();
+                isRunning = true;
+            } else {
+                isRunning = !isRunning;
+            }
+            updateButtonText();
+        });
+
+        resetBtn.addEventListener('click', reset);
+
+        function reset() {
+            isRunning = false;
+            isFinished = false;
+            time = 0;
+            velocity = 0;
+            positionX = 0;
+            velocityHistory = [];
+            updateButtonText();
+            updateUIValues();
+            draw();
+        }
+
+        // Init
+        const urlParams = new URLSearchParams(window.location.search);
+        const langParam = urlParams.get('lang');
+        if (langParam && translations[langParam]) {
+            setLanguage(langParam);
+        } else {
+            setLanguage('en-US');
+        }
+
+        resizeCanvases();
+        reset();
+        requestAnimationFrame(loop);
+
+    </script>
+</body>
+
+</html>

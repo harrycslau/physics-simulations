@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Simulation: Acrobat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #f0f9ff;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel {
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Custom Scrollbar for inputs */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #bfdbfe;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col items-center justify-center h-screen text-gray-800 relative">
+
+    <!-- Top Control Bar -->
+    <div class="w-[95%] p-4 flex flex-wrap gap-4 justify-between items-center z-10">
+        <h1 class="text-2xl font-bold text-blue-700" data-i18n="app_title">Physics Simulation: Acrobat (Adjustable Zoom)
+        </h1>
+        <div class="flex flex-wrap gap-3 items-center justify-end">
+            <div class="flex gap-2">
+                <button id="startBtn"
+                    class="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold shadow transition"
+                    data-i18n="btn_start">Start Simulation</button>
+                <button id="resetBtn"
+                    class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-bold shadow transition"
+                    data-i18n="btn_reset">Reset</button>
+            </div>
+            <div
+                class="flex bg-white/80 backdrop-blur-sm rounded-full p-1 border border-gray-200 shadow-lg shrink-0">
+                <button onclick="setLanguage('en-US')" id="btn-en"
+                    class="px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md">EN</button>
+                <button onclick="setLanguage('zh-HK')" id="btn-zh"
+                    class="px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-gray-400 hover:text-white hover:bg-gray-700">繁</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="flex w-[95%] gap-4 h-full pb-4 px-4">
+        <!-- Left: Canvas -->
+        <div class="relative flex-grow border-2 border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg">
+            <canvas id="gameCanvas"></canvas>
+
+            <!-- Floating Data Panel -->
+            <div id="dataPanel"
+                class="absolute top-4 left-4 panel p-4 rounded-lg border border-blue-100 shadow-lg w-64 cursor-move select-none"
+                style="touch-action: none;">
+                <h3 class="font-bold text-lg border-b pb-2 mb-2 text-gray-700 pointer-events-none"
+                    data-i18n="panel_data_title">Real-time Data</h3>
+                <div class="space-y-2 text-sm font-mono pointer-events-none">
+                    <div class="flex justify-between"><span data-i18n="label_time">Time (t):</span> <span id="disp-time"
+                            class="text-blue-600">0.00 s</span></div>
+                    <div class="flex justify-between"><span data-i18n="label_velocity">Velocity (v):</span> <span
+                            id="disp-v" class="text-red-600">0.00 m/s</span></div>
+                    <div class="flex justify-between"><span data-i18n="label_height">Height (h):</span> <span
+                            id="disp-h" class="text-green-600">0.00 m</span></div>
+                    <hr class="my-2">
+                    <div class="flex justify-between"><span data-i18n="label_ke">Kinetic Energy (KE):</span> <span
+                            id="disp-ke" class="text-purple-600">0 J</span></div>
+                    <div class="flex justify-between"><span data-i18n="label_pe">Potential Energy (PE):</span> <span
+                            id="disp-pe" class="text-orange-500">0 J</span></div>
+                    <div class="flex justify-between font-bold"><span data-i18n="label_te">Total Energy (E):</span>
+                        <span id="disp-te" class="text-gray-800">0 J</span></div>
+                </div>
+
+                <!-- Energy Bars -->
+                <div class="mt-4 space-y-1 pointer-events-none">
+                    <div class="text-xs text-gray-500" data-i18n="label_energy_icon">Energy Conversion</div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1 overflow-hidden">
+                        <div id="bar-ke" class="bg-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-purple-600 mb-1"><span>KE</span></div>
+
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1 overflow-hidden">
+                        <div id="bar-pe" class="bg-orange-500 h-2.5 rounded-full" style="width: 100%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-orange-500"><span>PE</span></div>
+                </div>
+            </div>
+
+            <!-- Status Label -->
+            <div id="statusLabel"
+                class="absolute top-4 right-4 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-bold">
+                Ready
+            </div>
+        </div>
+
+        <!-- Right: Settings -->
+        <div
+            class="w-72 flex flex-col gap-3 panel p-4 rounded-xl border border-gray-200 shadow-lg h-fit overflow-y-auto flex-shrink-0">
+            <h3 class="font-bold text-lg text-gray-700 border-b pb-2" data-i18n="panel_settings_title">Settings</h3>
+
+            <!-- Angle Settings -->
+            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 space-y-3">
+                <h4 class="text-xs font-bold text-blue-800 uppercase tracking-wide" data-i18n="group_angles">Angle
+                    Controls</h4>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700 flex justify-between">
+                        <span data-i18n="label_start_angle">Start Angle A</span>
+                        <span class="text-blue-600 font-mono"><span id="val-start-angle">-90</span>°</span>
+                    </label>
+                    <input type="range" id="inp-start-angle" min="-90" max="-10" step="5" value="-90" class="w-full">
+                    <div class="text-xs text-gray-400 text-right" data-i18n="hint_start_angle">0° is vertical down</div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700 flex justify-between">
+                        <span data-i18n="label_release_angle">Release Angle B</span>
+                        <span class="text-red-600 font-mono"><span id="val-release-angle">-30</span>°</span>
+                    </label>
+                    <input type="range" id="inp-release-angle" min="-80" max="60" step="5" value="-30" class="w-full">
+                    <div class="text-xs text-gray-400 text-right" data-i18n="hint_release_angle">Positive means past
+                        lowest point</div>
+                </div>
+            </div>
+
+            <!-- Physics Params -->
+            <div class="space-y-1 pt-2">
+                <label class="text-sm font-medium text-gray-600 flex justify-between">
+                    <span data-i18n="label_length">Length</span> <span class="font-mono"><span id="val-len">8</span>
+                        m</span>
+                </label>
+                <input type="range" id="inp-len" min="4" max="12" step="0.5" value="8" class="w-full">
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-sm font-medium text-gray-600 flex justify-between">
+                    <span data-i18n="label_mass">Mass</span> <span class="font-mono"><span id="val-mass">60</span>
+                        kg</span>
+                </label>
+                <input type="range" id="inp-mass" min="40" max="100" step="1" value="60" class="w-full">
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-sm font-medium text-gray-600 flex justify-between">
+                    <span data-i18n="label_gravity">Gravity (g)</span> <span class="font-mono"><span
+                            id="val-g">9.81</span> m/s²</span>
+                </label>
+                <input type="range" id="inp-g" min="1.6" max="20" step="0.1" value="9.81" class="w-full">
+            </div>
+
+            <!-- Zoom -->
+            <div class="space-y-1 pt-2 mt-2 border-t border-gray-200">
+                <label class="text-sm font-medium text-gray-600 flex justify-between">
+                    <span data-i18n="label_zoom">Zoom</span> <span class="font-mono text-blue-600"><span
+                            id="val-zoom">30</span></span>
+                </label>
+                <input type="range" id="inp-zoom" min="10" max="60" step="1" value="30"
+                    class="w-full accent-purple-500">
+            </div>
+
+            <div class="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200">
+                <input type="checkbox" id="slowMo" class="w-4 h-4 accent-blue-500 rounded">
+                <label for="slowMo" class="text-sm font-medium text-gray-700 select-none" data-i18n="label_slow_mo">Slow
+                    Motion</label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- I18N ---
+        const translations = {
+            'en-US': {
+                app_title: "Physics Simulation: Acrobat (Adjustable Zoom)",
+                btn_start: "Start Simulation",
+                btn_reset: "Reset",
+                panel_data_title: "Real-time Data",
+                label_time: "Time (t):",
+                label_velocity: "Velocity (v):",
+                label_height: "Height (h):",
+                label_ke: "Kinetic Energy (KE):",
+                label_pe: "Potential Energy (PE):",
+                label_te: "Total Energy (E):",
+                label_energy_icon: "Energy Conversion",
+                panel_settings_title: "Settings",
+                group_angles: "Angle Controls",
+                label_start_angle: "Start Angle A",
+                hint_start_angle: "0° is vertical down",
+                label_release_angle: "Release Angle B",
+                hint_release_angle: "Positive means past lowest point",
+                label_length: "Length",
+                label_mass: "Mass",
+                label_gravity: "Gravity (g)",
+                label_zoom: "Zoom",
+                label_slow_mo: "Slow Motion",
+                status_ready: "Ready",
+                status_swinging: "Swinging",
+                status_projectile: "Projectile",
+                status_landed: "Landed",
+                canvas_ground: "Ground C"
+            },
+            'zh-HK': {
+                app_title: "物理模擬：雜技演員 (可調縮放版)",
+                btn_start: "開始模擬",
+                btn_reset: "重置",
+                panel_data_title: "實時數據",
+                label_time: "時間 (t):",
+                label_velocity: "速度 (v):",
+                label_height: "高度 (h):",
+                label_ke: "動能 (KE):",
+                label_pe: "位能 (PE):",
+                label_te: "總能量 (E):",
+                label_energy_icon: "能量轉換圖示",
+                panel_settings_title: "參數設定",
+                group_angles: "角度控制",
+                label_start_angle: "起始角度 A",
+                hint_start_angle: "0° 為垂直向下",
+                label_release_angle: "鬆手角度 B",
+                hint_release_angle: "正值代表盪過最低點",
+                label_length: "繩長",
+                label_mass: "質量",
+                label_gravity: "重力 (g)",
+                label_zoom: "顯示比例",
+                label_slow_mo: "慢動作模式",
+                status_ready: "準備中",
+                status_swinging: "擺盪中",
+                status_projectile: "拋體運動",
+                status_landed: "已著陸",
+                canvas_ground: "地面"
+            }
+        };
+
+        let currentLang = 'en-US';
+
+        function setLanguage(lang) {
+            if (translations[lang]) {
+                currentLang = lang;
+                document.documentElement.lang = lang;
+
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('lang', lang);
+                window.history.pushState({}, '', newUrl);
+
+                updateLanguageUI();
+                updateStatusLabel(); // Refresh status text
+                draw(); // Refresh canvas text
+            }
+        }
+
+        function updateLanguageUI() {
+            const btnEn = document.getElementById('btn-en');
+            const btnZh = document.getElementById('btn-zh');
+
+            if (currentLang === 'en-US') {
+                btnEn.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md";
+                btnZh.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-gray-400 hover:text-white hover:bg-gray-700";
+            } else {
+                btnZh.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 bg-blue-500 text-white shadow-md";
+                btnEn.className = "px-3 py-1 text-xs font-bold rounded-full transition-all duration-300 text-gray-400 hover:text-white hover:bg-gray-700";
+            }
+
+            document.title = translations[currentLang].app_title;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+        }
+
+        // --- 遊戲與物理引擎 ---
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- 實時數據面板拖曳功能 ---
+        const dataPanel = document.getElementById('dataPanel');
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        dataPanel.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragOffsetX = e.clientX - dataPanel.offsetLeft;
+            dragOffsetY = e.clientY - dataPanel.offsetTop;
+            dataPanel.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const container = canvas.parentElement;
+            let newX = e.clientX - dragOffsetX;
+            let newY = e.clientY - dragOffsetY;
+
+            if (newX < 0) newX = 0;
+            if (newY < 0) newY = 0;
+            if (newX + dataPanel.offsetWidth > container.clientWidth) newX = container.clientWidth - dataPanel.offsetWidth;
+            if (newY + dataPanel.offsetHeight > container.clientHeight) newY = container.clientHeight - dataPanel.offsetHeight;
+
+            dataPanel.style.left = newX + 'px';
+            dataPanel.style.top = newY + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            dataPanel.style.cursor = 'move';
+        });
+
+        // DOM Elements
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusLabel = document.getElementById('statusLabel');
+
+        // Display Elements
+        const dispTime = document.getElementById('disp-time');
+        const dispV = document.getElementById('disp-v');
+        const dispH = document.getElementById('disp-h');
+        const dispKE = document.getElementById('disp-ke');
+        const dispPE = document.getElementById('disp-pe');
+        const dispTE = document.getElementById('disp-te');
+        const barKE = document.getElementById('bar-ke');
+        const barPE = document.getElementById('bar-pe');
+
+        // Inputs
+        const inpLen = document.getElementById('inp-len');
+        const valLen = document.getElementById('val-len');
+        const inpMass = document.getElementById('inp-mass');
+        const valMass = document.getElementById('val-mass');
+        const inpG = document.getElementById('inp-g');
+        const valG = document.getElementById('val-g');
+
+        const inpStartAngle = document.getElementById('inp-start-angle');
+        const valStartAngle = document.getElementById('val-start-angle');
+        const inpReleaseAngle = document.getElementById('inp-release-angle');
+        const valReleaseAngle = document.getElementById('val-release-angle');
+
+        const inpZoom = document.getElementById('inp-zoom');
+        const valZoom = document.getElementById('val-zoom');
+
+        const slowMoCheck = document.getElementById('slowMo');
+
+        // Physics State
+        let state = {
+            phase: 'idle', // idle, swing, fly, landed
+            t: 0,
+            dt: 0.016, // Time step
+
+            // Physical Constants
+            g: 9.81,
+            L: 8.0,
+            m: 60,
+
+            // Dynamic Angle Config
+            startAngleDeg: -90,
+            releaseAngleDeg: -30,
+            releaseAngleRad: -Math.PI / 6,
+
+            // Variables
+            theta: -Math.PI / 2,
+            omega: 0,
+
+            // Cartesian Position (relative to Pivot O)
+            x: 0, y: 0, vx: 0, vy: 0,
+
+            // Visual
+            scale: 30, // Default Zoom
+            originX: 0, originY: 0,
+            path: []
+        };
+
+        // Resize Canvas
+        function resize() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            state.originX = canvas.width * 0.35; // Shifted slightly right
+            state.originY = canvas.height * 0.15;
+            draw();
+        }
+        window.addEventListener('resize', resize);
+
+        // Init / Reset
+        function init() {
+            state.phase = 'idle';
+            state.t = 0;
+
+            // Read inputs
+            state.L = parseFloat(inpLen.value);
+            state.m = parseFloat(inpMass.value);
+            state.g = parseFloat(inpG.value);
+            state.scale = parseFloat(inpZoom.value);
+            state.startAngleDeg = parseInt(inpStartAngle.value);
+            state.releaseAngleDeg = parseInt(inpReleaseAngle.value);
+
+            // Validate Angles: Release must be > Start
+            if (state.releaseAngleDeg <= state.startAngleDeg) {
+                state.releaseAngleDeg = state.startAngleDeg + 10;
+                inpReleaseAngle.value = state.releaseAngleDeg;
+                valReleaseAngle.innerText = state.releaseAngleDeg;
+            }
+
+            // Convert to Radians
+            state.theta = state.startAngleDeg * (Math.PI / 180);
+            state.releaseAngleRad = state.releaseAngleDeg * (Math.PI / 180);
+
+            state.omega = 0;
+            state.path = [];
+
+            updatePositionFromTheta();
+            updateDisplay();
+            updateStatusLabel();
+            draw();
+        }
+
+        function updatePositionFromTheta() {
+            state.x = state.L * Math.sin(state.theta);
+            state.y = state.L * Math.cos(state.theta);
+
+            let v = state.L * state.omega;
+            state.vx = v * Math.cos(state.theta);
+            state.vy = -v * Math.sin(state.theta);
+        }
+
+        function updateStatusLabel() {
+            let text = "";
+            let colorClass = "";
+
+            switch (state.phase) {
+                case 'idle':
+                    text = translations[currentLang].status_ready;
+                    colorClass = "bg-blue-100 text-blue-800";
+                    break;
+                case 'swing':
+                    text = translations[currentLang].status_swinging;
+                    colorClass = "bg-purple-100 text-purple-800";
+                    break;
+                case 'fly':
+                    text = translations[currentLang].status_projectile;
+                    colorClass = "bg-orange-100 text-orange-800";
+                    break;
+                case 'landed':
+                    text = translations[currentLang].status_landed;
+                    colorClass = "bg-green-100 text-green-800";
+                    break;
+            }
+
+            statusLabel.textContent = text;
+            statusLabel.className = `absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold shadow-md ${colorClass}`;
+        }
+
+        // Physics Loop
+        let animationId;
+        function loop() {
+            if (state.phase === 'idle' || state.phase === 'landed') return;
+
+            const timeScale = slowMoCheck.checked ? 0.2 : 1.0;
+            const dt = state.dt * timeScale;
+
+            state.t += dt;
+
+            if (state.phase === 'swing') {
+                const alpha = -(state.g / state.L) * Math.sin(state.theta);
+                state.omega += alpha * dt;
+                state.theta += state.omega * dt;
+
+                updatePositionFromTheta();
+
+                // Check Release
+                if (state.theta >= state.releaseAngleRad) {
+                    state.theta = state.releaseAngleRad; // Clamp
+                    updatePositionFromTheta();
+                    state.phase = 'fly';
+                    updateStatusLabel();
+                }
+            }
+            else if (state.phase === 'fly') {
+                state.vy += state.g * dt;
+                state.x += state.vx * dt;
+                state.y += state.vy * dt;
+
+                // Ground collision
+                const groundLevel = state.L + 4;
+                if (state.y >= groundLevel) {
+                    state.y = groundLevel;
+                    state.phase = 'landed';
+                    state.vx = 0; state.vy = 0;
+                    updateStatusLabel();
+                    cancelAnimationFrame(animationId);
+                }
+            }
+
+            if (state.t % (0.05) < dt) {
+                state.path.push({ x: state.x, y: state.y });
+            }
+
+            updateDisplay();
+            draw();
+
+            if (state.phase !== 'landed') {
+                animationId = requestAnimationFrame(loop);
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const ox = state.originX;
+            const oy = state.originY;
+            const s = state.scale;
+
+            // Draw Ground C
+            const groundY = oy + (state.L + 4) * s;
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(canvas.width, groundY);
+            ctx.stroke();
+            ctx.fillStyle = '#64748b';
+            ctx.font = "bold 14px sans-serif";
+            ctx.fillText(translations[currentLang].canvas_ground, canvas.width - 150, groundY + 25);
+
+            // Draw Start Platform A (Based on Start Angle)
+            const startX = ox + state.L * s * Math.sin(state.startAngleDeg * Math.PI / 180);
+            const startY = oy + state.L * s * Math.cos(state.startAngleDeg * Math.PI / 180);
+
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(startX - 30, startY, 60, 6);
+            ctx.fillText("A", startX - 40, startY + 5);
+
+            // Draw Pivot
+            ctx.beginPath();
+            ctx.arc(ox, oy, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#1e293b';
+            ctx.fill();
+            ctx.fillText("O", ox - 5, oy - 15);
+
+            // Draw Vertical Reference Line (Dashed)
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.moveTo(ox, oy);
+            ctx.lineTo(ox, groundY);
+            ctx.stroke();
+
+            // Draw Release Point B Indicator
+            const releaseX = ox + state.L * s * Math.sin(state.releaseAngleRad);
+            const releaseY = oy + state.L * s * Math.cos(state.releaseAngleRad);
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#ef4444';
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(ox, oy);
+            ctx.lineTo(releaseX, releaseY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#ef4444';
+            ctx.font = "12px sans-serif";
+            ctx.fillText(`B (${state.releaseAngleDeg}°)`, releaseX + 10, releaseY);
+
+            // Draw Rope
+            if (state.phase === 'swing' || state.phase === 'idle') {
+                ctx.beginPath();
+                ctx.moveTo(ox, oy);
+                ctx.lineTo(ox + state.x * s, oy + state.y * s);
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+
+            // Draw Path
+            if (state.path.length > 0) {
+                ctx.beginPath();
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 2;
+                state.path.forEach((p, i) => {
+                    if (i === 0) ctx.moveTo(ox + p.x * s, oy + p.y * s);
+                    else ctx.lineTo(ox + p.x * s, oy + p.y * s);
+                });
+                ctx.stroke();
+            }
+
+            // Draw Acrobat
+            const ballX = ox + state.x * s;
+            const ballY = oy + state.y * s;
+
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, 12, 0, Math.PI * 2);
+
+            // Color change based on phase
+            if (state.phase === 'fly') ctx.fillStyle = '#f59e0b'; // Orange when flying
+            else if (state.phase === 'landed') ctx.fillStyle = '#10b981'; // Green when landed
+            else ctx.fillStyle = '#3b82f6'; // Blue normally
+
+            ctx.fill();
+            ctx.stroke();
+
+            // Velocity Vector (Green Arrow)
+            if (state.phase !== 'idle' && state.phase !== 'landed') {
+                const vMag = Math.sqrt(state.vx * state.vx + state.vy * state.vy);
+                if (vMag > 0.1) {
+                    const vScale = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(ballX, ballY);
+                    ctx.lineTo(ballX + state.vx * vScale * s / 5, ballY + state.vy * vScale * s / 5);
+                    ctx.strokeStyle = '#16a34a'; // Green
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function updateDisplay() {
+            const v = Math.sqrt(state.vx * state.vx + state.vy * state.vy);
+            const groundLevelPhysics = state.L + 4;
+            const h = groundLevelPhysics - state.y;
+
+            const ke = 0.5 * state.m * v * v;
+            const pe = state.m * state.g * h;
+            const te = ke + pe;
+
+            dispTime.innerText = state.t.toFixed(2) + " s";
+            dispV.innerText = v.toFixed(2) + " m/s";
+            dispH.innerText = h.toFixed(2) + " m";
+
+            dispKE.innerText = Math.round(ke) + " J";
+            dispPE.innerText = Math.round(pe) + " J";
+            dispTE.innerText = Math.round(te) + " J";
+
+            // Max Energy for bars (PE at max height possible roughly)
+            const maxH = groundLevelPhysics + state.L; // Highest possible point roughly
+            const maxE = state.m * state.g * maxH * 0.8;
+
+            barKE.style.width = Math.min(100, (ke / te) * 100) + "%";
+            barPE.style.width = Math.min(100, (pe / te) * 100) + "%";
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', () => {
+            if (state.phase !== 'idle') return;
+            state.phase = 'swing';
+            updateStatusLabel();
+            loop();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            cancelAnimationFrame(animationId);
+            init();
+        });
+
+        // Settings Listeners
+        [inpLen, inpMass, inpG, inpStartAngle, inpReleaseAngle].forEach(el => {
+            el.addEventListener('input', () => {
+                valLen.innerText = inpLen.value;
+                valMass.innerText = inpMass.value;
+                valG.innerText = inpG.value;
+                valStartAngle.innerText = inpStartAngle.value;
+                valReleaseAngle.innerText = inpReleaseAngle.value;
+
+                if (state.phase === 'idle') init();
+            });
+        });
+
+        // Zoom Listener
+        inpZoom.addEventListener('input', () => {
+            state.scale = parseFloat(inpZoom.value);
+            valZoom.innerText = state.scale;
+            draw();
+        });
+
+        // Init
+        const urlParams = new URLSearchParams(window.location.search);
+        const langParam = urlParams.get('lang');
+        if (langParam && translations[langParam]) {
+            setLanguage(langParam);
+        } else {
+            setLanguage('en-US');
+        }
+
+        resize();
+        init();
+    </script>
+</body>
+
+</html>
