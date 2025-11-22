@@ -17,7 +17,9 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/biology/micro-ecosystem.html",
-        "screenshotUrl": "screenshots/micro-ecosystem.png"
+        "screenshotUrl": "screenshots/micro-ecosystem.png",
+        "createdAt": "2025-11-21",
+        "updatedAt": "2025-11-21"
     },
     {
         "id": "osmosis",
@@ -37,7 +39,9 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/biology/osmosis.html",
-        "screenshotUrl": "screenshots/osmosis.png"
+        "screenshotUrl": "screenshots/osmosis.png",
+        "createdAt": "2025-11-21",
+        "updatedAt": "2025-11-21"
     },
     {
         "id": "air-conditioner",
@@ -57,7 +61,9 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/heat-and-gases/air-conditioner.html",
-        "screenshotUrl": "screenshots/air-conditioner.png"
+        "screenshotUrl": "screenshots/air-conditioner.png",
+        "createdAt": "2025-11-21",
+        "updatedAt": "2025-11-21"
     },
     {
         "id": "convection",
@@ -77,7 +83,9 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/heat-and-gases/convection.html",
-        "screenshotUrl": "screenshots/convection.png"
+        "screenshotUrl": "screenshots/convection.png",
+        "createdAt": "2025-11-21",
+        "updatedAt": "2025-11-21"
     },
     {
         "id": "specific-heat-capacity",
@@ -97,7 +105,9 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/heat-and-gases/specific-heat-capacity.html",
-        "screenshotUrl": "screenshots/specific-heat-capacity.png"
+        "screenshotUrl": "screenshots/specific-heat-capacity.png",
+        "createdAt": "2025-11-21",
+        "updatedAt": "2025-11-21"
     },
     {
         "id": "diffraction-grating",
@@ -117,7 +127,9 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/optics-and-wave-motion/diffraction-grating.html",
-        "screenshotUrl": "screenshots/diffraction-grating.png"
+        "screenshotUrl": "screenshots/diffraction-grating.png",
+        "createdAt": "2025-11-21",
+        "updatedAt": "2025-11-21"
     },
     {
         "id": "reflection-of-light",
@@ -137,7 +149,9 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/optics-and-wave-motion/reflection-of-light.html",
-        "screenshotUrl": "screenshots/reflection-of-light.png"
+        "screenshotUrl": "screenshots/reflection-of-light.png",
+        "createdAt": "2025-11-21",
+        "updatedAt": "2025-11-21"
     },
     {
         "id": "snells-law",
@@ -157,6 +171,8 @@
             "Bryan Leung"
         ],
         "simulationUrl": "simulations/optics-and-wave-motion/snells-law.html",
-        "screenshotUrl": "screenshots/snells-law.png"
+        "screenshotUrl": "screenshots/snells-law.png",
+        "createdAt": "2025-11-21",
+        "updatedAt": "2025-11-21"
     }
 ]
